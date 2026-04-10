@@ -1,0 +1,37 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "L5 Swagger UI",
+        "description": "Интерактивная документация HTTP API",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/",
+            "description": "Текущий хост приложения"
+        }
+    ],
+    "paths": {
+        "/api/health": {
+            "get": {
+                "tags": [
+                    "Служебное"
+                ],
+                "summary": "Проверка доступности API",
+                "description": "Заглушка для swagger-php: маршрут в приложении можно добавить позже.",
+                "operationId": "ca899901e4cd016d3037062452f6de98",
+                "responses": {
+                    "200": {
+                        "description": "Сервис отвечает"
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Служебное",
+            "description": "Служебное"
+        }
+    ]
+}
