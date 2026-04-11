@@ -3,7 +3,10 @@
 namespace App\Models;
 
 use App\Enums\OrgStatus;
+use Database\Factories\OrgFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
@@ -18,8 +21,12 @@ use Illuminate\Database\Eloquent\Model;
     'city',
     'status',
 ])]
+#[Table('orgs')]
 class Org extends Model
 {
+    /** @use HasFactory<OrgFactory> */
+    use HasFactory;
+
     /**
      * Атрибуты с приведением типов (casts).
      *

@@ -2,9 +2,6 @@
 
 use App\Enums\OrgStatus;
 use App\Models\Org;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-uses(RefreshDatabase::class);
 
 test('у организации по умолчанию status равен null, после установки приводится к enum', function () {
     $org = Org::create([

@@ -43,12 +43,246 @@
                     }
                 }
             }
+        },
+        "/api/orgs": {
+            "post": {
+                "tags": [
+                    "Организации"
+                ],
+                "summary": "Создать организацию",
+                "description": "Создаёт новую организацию со статусом `new`. Поле slug необязательно: при отсутствии генерируется из name.",
+                "operationId": "646eb64ec7dcae8ebb86ac7d278835ea",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OrgStoreRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Организация создана",
+                        "headers": {
+                            "Location": {
+                                "description": "URL созданной организации (GET)",
+                                "schema": {
+                                    "type": "string",
+                                    "example": "/api/orgs/1"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Org"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации"
+                    }
+                }
+            }
+        },
+        "/api/orgs/{org}": {
+            "get": {
+                "tags": [
+                    "Организации"
+                ],
+                "summary": "Получить организацию по идентификатору",
+                "description": "Возвращает одну организацию по числовому первичному ключу.",
+                "operationId": "258ea0f0b99ef4680003754631f2c79d",
+                "parameters": [
+                    {
+                        "name": "org",
+                        "in": "path",
+                        "description": "Числовой идентификатор организации (первичный ключ)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Организация найдена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Org"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Организация с указанным id не найдена"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Org": {
+                "required": [
+                    "id",
+                    "name",
+                    "slug",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Acme Inc"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "acme-inc"
+                    },
+                    "about": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "logo": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "website": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "city": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "description": "Статус организации",
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "new",
+                            "enabled",
+                            "deleted"
+                        ]
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "OrgStoreRequest": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Acme Inc",
+                        "maxLength": 255
+                    },
+                    "slug": {
+                        "description": "Уникальный slug; если не указан, будет сгенерирован из name",
+                        "type": "string",
+                        "example": "acme-inc",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "about": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "logo": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "website": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "city": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                    }
+                },
+                "type": "object"
+            }
         }
     },
     "tags": [
         {
             "name": "Служебное",
             "description": "Служебное"
+        },
+        {
+            "name": "Организации",
+            "description": "Организации"
         }
     ]
 }
