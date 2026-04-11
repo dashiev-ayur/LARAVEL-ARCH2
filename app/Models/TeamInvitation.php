@@ -17,7 +17,7 @@ class TeamInvitation extends Model
     use HasFactory;
 
     /**
-     * Bootstrap the model and its traits.
+     * Инициализация модели и её трейтов.
      */
     protected static function boot(): void
     {
@@ -31,7 +31,7 @@ class TeamInvitation extends Model
     }
 
     /**
-     * Get the team that the invitation belongs to.
+     * Команда, к которой относится приглашение.
      *
      * @return BelongsTo<Team, $this>
      */
@@ -41,7 +41,7 @@ class TeamInvitation extends Model
     }
 
     /**
-     * Get the user who sent the invitation.
+     * Пользователь, отправивший приглашение.
      *
      * @return BelongsTo<Model, $this>
      */
@@ -51,7 +51,7 @@ class TeamInvitation extends Model
     }
 
     /**
-     * Determine if the invitation has been accepted.
+     * Проверить, принято ли приглашение.
      */
     public function isAccepted(): bool
     {
@@ -59,7 +59,7 @@ class TeamInvitation extends Model
     }
 
     /**
-     * Determine if the invitation is pending.
+     * Проверить, ожидает ли приглашение ответа.
      */
     public function isPending(): bool
     {
@@ -67,7 +67,7 @@ class TeamInvitation extends Model
     }
 
     /**
-     * Determine if the invitation has expired.
+     * Проверить, истекло ли приглашение.
      */
     public function isExpired(): bool
     {
@@ -75,7 +75,7 @@ class TeamInvitation extends Model
     }
 
     /**
-     * Get the attributes that should be cast.
+     * Атрибуты с приведением типов (casts).
      *
      * @return array<string, string>
      */
@@ -89,7 +89,7 @@ class TeamInvitation extends Model
     }
 
     /**
-     * Get the route key for the model.
+     * Имя ключа маршрута для модели.
      */
     public function getRouteKeyName(): string
     {

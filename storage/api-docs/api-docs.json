@@ -18,11 +18,28 @@
                     "Служебное"
                 ],
                 "summary": "Проверка доступности API",
-                "description": "Заглушка для swagger-php: маршрут в приложении можно добавить позже.",
-                "operationId": "ca899901e4cd016d3037062452f6de98",
+                "description": "Лёгкая проверка: сервер отвечает и отдаёт JSON. Зависимости (БД, очереди) не проверяются.",
+                "operationId": "c873d7f3d9f52c19cd7a1b4bebfe02df",
                 "responses": {
                     "200": {
-                        "description": "Сервис отвечает"
+                        "description": "API доступен",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "status"
+                                    ],
+                                    "properties": {
+                                        "status": {
+                                            "description": "Индикатор работоспособности",
+                                            "type": "string",
+                                            "example": "ok"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }

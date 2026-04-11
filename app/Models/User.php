@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+// Раскомментируйте строку use ниже, чтобы требовать подтверждение email (MustVerifyEmail).
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Concerns\HasTeams;
 use Database\Factories\UserFactory;
@@ -20,7 +21,7 @@ class User extends Authenticatable
     use HasFactory, HasTeams, Notifiable, TwoFactorAuthenticatable;
 
     /**
-     * Get the attributes that should be cast.
+     * Атрибуты с приведением типов (casts).
      *
      * @return array<string, string>
      */

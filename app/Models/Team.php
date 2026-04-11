@@ -19,7 +19,7 @@ class Team extends Model
     use GeneratesUniqueTeamSlugs, HasFactory, SoftDeletes;
 
     /**
-     * Bootstrap the model and its traits.
+     * Инициализация модели и её трейтов.
      */
     protected static function boot(): void
     {
@@ -39,7 +39,7 @@ class Team extends Model
     }
 
     /**
-     * Get the team owner.
+     * Владелец команды.
      */
     public function owner(): ?Model
     {
@@ -49,7 +49,7 @@ class Team extends Model
     }
 
     /**
-     * Get all members of this team.
+     * Все участники этой команды.
      *
      * @return BelongsToMany<Model, $this>
      */
@@ -62,7 +62,7 @@ class Team extends Model
     }
 
     /**
-     * Get all memberships for this team.
+     * Все записи членства для этой команды.
      *
      * @return HasMany<Membership, $this>
      */
@@ -72,7 +72,7 @@ class Team extends Model
     }
 
     /**
-     * Get all invitations for this team.
+     * Все приглашения для этой команды.
      *
      * @return HasMany<TeamInvitation, $this>
      */
@@ -82,7 +82,7 @@ class Team extends Model
     }
 
     /**
-     * Get the attributes that should be cast.
+     * Атрибуты с приведением типов (casts).
      *
      * @return array<string, string>
      */
@@ -94,7 +94,7 @@ class Team extends Model
     }
 
     /**
-     * Get the route key for the model.
+     * Имя ключа маршрута для модели.
      */
     public function getRouteKeyName(): string
     {

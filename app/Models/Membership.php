@@ -12,21 +12,21 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 class Membership extends Pivot
 {
     /**
-     * The table associated with the model.
+     * Таблица, связанная с моделью.
      *
      * @var string
      */
     protected $table = 'team_members';
 
     /**
-     * Indicates if the IDs are auto-incrementing.
+     * Указывает, автоинкрементируются ли идентификаторы.
      *
      * @var bool
      */
     public $incrementing = true;
 
     /**
-     * Get the team that the membership belongs to.
+     * Команда, к которой относится членство.
      *
      * @return BelongsTo<Team, $this>
      */
@@ -36,7 +36,7 @@ class Membership extends Pivot
     }
 
     /**
-     * Get the user that belongs to this membership.
+     * Пользователь, связанный с этим членством.
      *
      * @return BelongsTo<Model, $this>
      */
@@ -46,7 +46,7 @@ class Membership extends Pivot
     }
 
     /**
-     * Get the attributes that should be cast.
+     * Атрибуты с приведением типов (casts).
      *
      * @return array<string, string>
      */

@@ -78,7 +78,7 @@
 
 ## Заглушка в корневой спецификации
 
-В проекте файл `app/OpenApi/OpenApiSpec.php` задаёт минимальный валидный OpenAPI-документ для swagger-php:
+В проекте файл `app/Http/OpenApi/OpenApiSpec.php` задаёт минимальный валидный OpenAPI-документ для swagger-php:
 
 - атрибуты **`Info`** и **`Server`** (без `Info` генератор завершится ошибкой);
 - один описанный путь **`GET /api/health`** на методе-заглушке `openApiHealthPlaceholder()`.
