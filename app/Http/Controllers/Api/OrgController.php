@@ -13,6 +13,7 @@ use App\Http\Requests\Orgs\UpdateOrgRequest;
 use App\Http\Resources\OrgResource;
 use App\Models\Org;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 
 class OrgController extends Controller
 {
@@ -108,5 +109,12 @@ class OrgController extends Controller
         $org->save();
 
         return (new OrgResource($org))->response();
+    }
+
+    public function destroy(Org $org): Response
+    {
+        $org->delete();
+
+        return response()->noContent();
     }
 }

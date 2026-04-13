@@ -1,0 +1,56 @@
+---
+description: "Swagger/OpenAPI в проекте: как писать OA-атрибуты и где хранить схемы/операции"
+globs:
+  - "app/Http/OpenApi/**/*.php"
+  - "app/Http/Controllers/Api/**/*.php"
+  - "config/l5-swagger.php"
+  - "storage/api-docs/*.json"
+alwaysApply: true
+---
+
+## Swagger/OpenAPI (swagger-php + L5-Swagger) — правила проекта
+
+### Как устроено в этом репозитории
+- **Источник спецификации**: PHP-код с атрибутами `OpenApi\Attributes` (`use OpenApi\Attributes as OA;`).
+- **Где лежат описания**:
+  - **Операции по домену**: `app/Http/OpenApi/<resource>/*Operation.php` (пример: `app/Http/OpenApi/orgs/*Operation.php`).
+  - **Схемы компонентов**: `app/Http/OpenApi/<resource>/Schemas/*Schema.php` (пример: `Org`, `OrgStoreRequest`, `OrgUpdateRequest`).
+  - **Иногда — прямо в контроллере**: допустимо для простых служебных эндпоинтов (пример: `app/Http/Controllers/Api/HealthController.php`).
+  - **Корневые метаданные**: `app/Http/OpenApi/OpenApiSpec.php` задаёт `#[OA\Info(...)]` и `#[OA\Server(...)]`.
+- **Генерация / артефакт**: `config/l5-swagger.php` сканирует `base_path('app')`, результат пишется в `storage/api-docs/api-docs.json` командой `php artisan l5-swagger:generate`.
+
+### Главное правило
+Документация **не берётся из маршрутов Laravel автоматически**: атрибуты нужно поддерживать **в синхроне** с реальными роутами/контроллерами.
+
+### Стиль и структура атрибутов (как писать)
+- **Всегда**: `declare(strict_types=1);` в файлах `app/Http/OpenApi/**`.
+- **Операция**:
+  - Используй соответствующий HTTP-атрибут: `#[OA\Get]`, `#[OA\Post]`, `#[OA\Patch]`, `#[OA\Delete]`.
+  - Указывай `path`, `summary`, `description`, `tags`.
+  - Для path-параметров добавляй `#[OA\Parameter(in: 'path', ...)]` (пример: `{org}` как `integer int64` с `minimum: 1`).
+- **Тела запросов**:
+  - Для JSON request body используй `#[OA\RequestBody(content: new OA\JsonContent(ref: '#/components/schemas/<SchemaName>'))]`.
+  - Схемы request body описывай как компоненты в `Schemas/*RequestSchema.php`.
+- **Ответы**:
+  - Для успешных ответов задавай `#[OA\Response(..., content: new OA\JsonContent(...))]`.
+  - Для ресурсных методов следуй текущей конвенции проекта: JSON-обёртка `{ "data": ... }`.
+  - Указывай типичные ошибки: `404` (не найдено), `422` (валидация), `204` (без тела).
+  - Если метод возвращает `Location`, оформляй `headers: [new OA\Header(...)]`.
+- **Компонентные схемы**:
+  - Имена `schema:` в `#[OA\Schema(schema: '...')]` — **PascalCase**, как в текущих `Org*`.
+  - Для enum-строк используй `enum: [...]` и (если есть) `description`.
+  - Для nullable-колонок ставь `nullable: true`.
+
+### Где размещать новое описание
+- Если это CRUD/ресурс — добавляй **Operation** в `app/Http/OpenApi/<resource>/` и **Schema** в `app/Http/OpenApi/<resource>/Schemas/`.
+- Если это небольшой “служебный” эндпоинт — можно держать атрибуты в соответствующем `app/Http/Controllers/Api/*Controller.php`.
+
+### Как обновлять Swagger UI / JSON
+- После правок атрибутов запускай: `php artisan l5-swagger:generate`.
+- Убедись, что `storage/api-docs/api-docs.json` обновился и содержит нужные пути/схемы.
+- Для минимальной проверки генерации ориентируйся на тест: `tests/Feature/L5SwaggerGenerateCommandTest.php`.
+
+### Антипаттерны (не делай так)
+- Не “изобретай” новую структуру директорий для OpenAPI: придерживайся `app/Http/OpenApi/**`.
+- Не хардкодь схемы inline, если они переиспользуются: вынеси в `#/components/schemas/*`.
+- Не добавляй атрибуты, которые расходятся с реальными путями/методами в `routes/api.php`.

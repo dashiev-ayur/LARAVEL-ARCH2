@@ -44,6 +44,138 @@
                 }
             }
         },
+        "/api/orgs/{org}": {
+            "get": {
+                "tags": [
+                    "Организации"
+                ],
+                "summary": "Получить организацию по идентификатору",
+                "description": "Возвращает одну организацию по числовому первичному ключу.",
+                "operationId": "ec0a6634ec81dc81c7a518d1d436a47a",
+                "parameters": [
+                    {
+                        "name": "org",
+                        "in": "path",
+                        "description": "Числовой идентификатор организации (первичный ключ)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Организация найдена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Org"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Организация с указанным id не найдена"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Организации"
+                ],
+                "summary": "Удалить организацию",
+                "description": "Удаляет организацию по числовому первичному ключу.",
+                "operationId": "cb47640c398d7701960d273011b94ec1",
+                "parameters": [
+                    {
+                        "name": "org",
+                        "in": "path",
+                        "description": "Числовой идентификатор организации (первичный ключ)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Организация удалена"
+                    },
+                    "404": {
+                        "description": "Организация с указанным id не найдена"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Организации"
+                ],
+                "summary": "Обновить организацию (частично)",
+                "description": "Частичное обновление организации. Поля являются опциональными: если поле не передано — оно не изменяется. Если поле передано как null — значение очищается (становится null) для nullable-колонок. Для slug: null означает регенерацию slug из name.",
+                "operationId": "dbb5b43d9c71b42f0605e98cfc22a921",
+                "parameters": [
+                    {
+                        "name": "org",
+                        "in": "path",
+                        "description": "Числовой идентификатор организации (первичный ключ)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OrgUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Организация обновлена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Org"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Организация с указанным id не найдена"
+                    },
+                    "422": {
+                        "description": "Ошибка валидации"
+                    }
+                }
+            }
+        },
         "/api/orgs": {
             "get": {
                 "tags": [
@@ -318,109 +450,6 @@
                                 }
                             }
                         }
-                    },
-                    "422": {
-                        "description": "Ошибка валидации"
-                    }
-                }
-            }
-        },
-        "/api/orgs/{org}": {
-            "get": {
-                "tags": [
-                    "Организации"
-                ],
-                "summary": "Получить организацию по идентификатору",
-                "description": "Возвращает одну организацию по числовому первичному ключу.",
-                "operationId": "ec0a6634ec81dc81c7a518d1d436a47a",
-                "parameters": [
-                    {
-                        "name": "org",
-                        "in": "path",
-                        "description": "Числовой идентификатор организации (первичный ключ)",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "format": "int64",
-                            "minimum": 1
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Организация найдена",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "required": [
-                                        "data"
-                                    ],
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/Org"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Организация с указанным id не найдена"
-                    }
-                }
-            },
-            "patch": {
-                "tags": [
-                    "Организации"
-                ],
-                "summary": "Обновить организацию (частично)",
-                "description": "Частичное обновление организации. Поля являются опциональными: если поле не передано — оно не изменяется. Если поле передано как null — значение очищается (становится null) для nullable-колонок. Для slug: null означает регенерацию slug из name.",
-                "operationId": "dbb5b43d9c71b42f0605e98cfc22a921",
-                "parameters": [
-                    {
-                        "name": "org",
-                        "in": "path",
-                        "description": "Числовой идентификатор организации (первичный ключ)",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "format": "int64",
-                            "minimum": 1
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/OrgUpdateRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Организация обновлена",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "required": [
-                                        "data"
-                                    ],
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/Org"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Организация с указанным id не найдена"
                     },
                     "422": {
                         "description": "Ошибка валидации"

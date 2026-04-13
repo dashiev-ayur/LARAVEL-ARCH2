@@ -15,3 +15,4 @@ Route::get('orgs', [OrgController::class, 'index'])->name('orgs.index');
 Route::post('orgs', [OrgController::class, 'store'])->name('orgs.store');
 Route::get('orgs/{org}', [OrgController::class, 'show'])->name('orgs.show');
 Route::patch('orgs/{org}', [OrgController::class, 'update'])->name('orgs.update');
+Route::delete('orgs/{org}', [OrgController::class, 'destroy'])->name('orgs.destroy');
