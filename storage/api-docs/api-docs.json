@@ -369,6 +369,63 @@
                         "description": "Организация с указанным id не найдена"
                     }
                 }
+            },
+            "patch": {
+                "tags": [
+                    "Организации"
+                ],
+                "summary": "Обновить организацию (частично)",
+                "description": "Частичное обновление организации. Поля являются опциональными: если поле не передано — оно не изменяется. Если поле передано как null — значение очищается (становится null) для nullable-колонок. Для slug: null означает регенерацию slug из name.",
+                "operationId": "ad08e5d3936181129c01a88920a6cbda",
+                "parameters": [
+                    {
+                        "name": "org",
+                        "in": "path",
+                        "description": "Числовой идентификатор организации (первичный ключ)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OrgUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Организация обновлена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Org"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Организация с указанным id не найдена"
+                    },
+                    "422": {
+                        "description": "Ошибка валидации"
+                    }
+                }
             }
         }
     },
@@ -498,6 +555,69 @@
                         "type": "string",
                         "nullable": true,
                         "maxLength": 255
+                    }
+                },
+                "type": "object"
+            },
+            "OrgUpdateRequest": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Acme Inc",
+                        "maxLength": 255
+                    },
+                    "slug": {
+                        "description": "Уникальный slug. Если передать null — slug будет регенерирован из name.",
+                        "type": "string",
+                        "example": "acme-inc",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "about": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "logo": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "website": {
+                        "type": "string",
+                        "format": "uri",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "city": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 255
+                    },
+                    "status": {
+                        "description": "Статус организации",
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "new",
+                            "enabled",
+                            "deleted"
+                        ]
                     }
                 },
                 "type": "object"

@@ -8,6 +8,7 @@ use App\Enums\OrgStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Orgs\IndexOrgRequest;
 use App\Http\Requests\Orgs\StoreOrgRequest;
+use App\Http\Requests\Orgs\UpdateOrgRequest;
 use App\Http\Resources\OrgResource;
 use App\Models\Org;
 use Illuminate\Http\JsonResponse;
@@ -271,6 +272,62 @@ class OrgController extends Controller
     #[OA\Response(response: 404, description: 'Организация с указанным id не найдена')]
     public function show(Org $org): JsonResponse
     {
+        return (new OrgResource($org))->response();
+    }
+
+    #[OA\Patch(
+        path: '/api/orgs/{org}',
+        summary: 'Обновить организацию (частично)',
+        description: 'Частичное обновление организации. Поля являются опциональными: если поле не передано — оно не изменяется. Если поле передано как null — значение очищается (становится null) для nullable-колонок. Для slug: null означает регенерацию slug из name.',
+        tags: ['Организации'],
+    )]
+    #[OA\Parameter(
+        name: 'org',
+        in: 'path',
+        required: true,
+        description: 'Числовой идентификатор организации (первичный ключ)',
+        schema: new OA\Schema(type: 'integer', format: 'int64', minimum: 1),
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(ref: '#/components/schemas/OrgUpdateRequest'),
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Организация обновлена',
+        content: new OA\JsonContent(
+            required: ['data'],
+            properties: [
+                new OA\Property(property: 'data', ref: '#/components/schemas/Org'),
+            ],
+        ),
+    )]
+    #[OA\Response(response: 404, description: 'Организация с указанным id не найдена')]
+    #[OA\Response(response: 422, description: 'Ошибка валидации')]
+    public function update(UpdateOrgRequest $request, Org $org): JsonResponse
+    {
+        $data = $request->validated();
+
+        $updates = [];
+
+        foreach (['name', 'about', 'logo', 'website', 'email', 'phone', 'address', 'city', 'status'] as $key) {
+            if (array_key_exists($key, $data)) {
+                $updates[$key] = $data[$key];
+            }
+        }
+
+        if (array_key_exists('slug', $data)) {
+            if ($data['slug'] === null) {
+                $nameForSlug = (string) ($updates['name'] ?? $org->name);
+                $updates['slug'] = $this->makeUniqueSlugFromName($nameForSlug);
+            } else {
+                $updates['slug'] = $data['slug'];
+            }
+        }
+
+        $org->fill($updates);
+        $org->save();
+
         return (new OrgResource($org))->response();
     }
 
