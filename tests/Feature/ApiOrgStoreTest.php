@@ -1,8 +1,42 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Models\Org;
+use Illuminate\Support\Carbon;
 
 use function Pest\Laravel\postJson;
+
+test('api генерирует уникальный slug из name при коллизии', function () {
+    Org::factory()->create([
+        'name' => 'Acme Inc',
+        'slug' => 'acme-inc',
+    ]);
+
+    $response = postJson(route('orgs.store'), [
+        'name' => 'Acme Inc',
+    ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.name', 'Acme Inc')
+        ->assertJsonPath('data.slug', 'acme-inc-1');
+});
+
+test('api добавляет timestamp postfix если числовые postfix заняты', function () {
+    Carbon::setTestNow(Carbon::parse('2026-04-13 12:00:00'));
+
+    Org::factory()->create(['slug' => 'acme-inc']);
+    Org::factory()->create(['slug' => 'acme-inc-1']);
+    Org::factory()->create(['slug' => 'acme-inc-2']);
+    Org::factory()->create(['slug' => 'acme-inc-3']);
+
+    $response = postJson(route('orgs.store'), [
+        'name' => 'Acme Inc',
+    ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.slug', 'acme-inc-'.Carbon::now()->timestamp);
+});
 
 test('api создаёт организацию и возвращает 201', function () {
     $response = postJson(route('orgs.store'), [
