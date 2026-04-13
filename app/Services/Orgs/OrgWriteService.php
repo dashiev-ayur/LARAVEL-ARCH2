@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\Orgs;
 
+use App\Application\Orgs\Ports\OrgWritePort;
 use App\Enums\OrgStatus;
 use App\Models\Org;
 
-final class OrgWriteService
+final class OrgWriteService implements OrgWritePort
 {
     public function __construct(
         private readonly OrgSlugService $slugs,

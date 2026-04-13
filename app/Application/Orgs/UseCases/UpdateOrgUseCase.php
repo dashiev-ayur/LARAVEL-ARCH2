@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Application\Orgs\UseCases;
 
+use App\Application\Orgs\Ports\OrgWritePort;
 use App\Models\Org;
-use App\Services\Orgs\OrgWriteService;
 
 final class UpdateOrgUseCase
 {
     public function __construct(
-        private readonly OrgWriteService $orgs,
+        private readonly OrgWritePort $orgs,
     ) {}
 
     /**

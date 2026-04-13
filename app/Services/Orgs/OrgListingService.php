@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services\Orgs;
 
+use App\Application\Orgs\Ports\OrgListingPort;
 use App\Enums\OrgStatus;
 use App\Http\Requests\Orgs\IndexOrgRequest;
 use App\Models\Org;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
-final class OrgListingService
+final class OrgListingService implements OrgListingPort
 {
     /**
      * @param  array<string, mixed>  $validated

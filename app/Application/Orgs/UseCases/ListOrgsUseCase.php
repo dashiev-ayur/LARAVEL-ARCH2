@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Application\Orgs\UseCases;
 
-use App\Services\Orgs\OrgListingService;
+use App\Application\Orgs\Ports\OrgListingPort;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 final class ListOrgsUseCase
 {
     public function __construct(
-        private readonly OrgListingService $listing,
+        private readonly OrgListingPort $listing,
     ) {}
 
     /**

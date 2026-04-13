@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Application\Orgs\Ports\OrgListingPort;
+use App\Application\Orgs\Ports\OrgWritePort;
+use App\Services\Orgs\OrgListingService;
+use App\Services\Orgs\OrgWriteService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(OrgWritePort::class, OrgWriteService::class);
+        $this->app->bind(OrgListingPort::class, OrgListingService::class);
     }
 
     /**
