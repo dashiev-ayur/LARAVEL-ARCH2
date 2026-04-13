@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
-use App\Concerns\GeneratesUniqueOrgSlugs;
-use App\Enums\OrgStatus;
+use App\Application\Orgs\UseCases\CreateOrgUseCase;
+use App\Application\Orgs\UseCases\DeleteOrgUseCase;
+use App\Application\Orgs\UseCases\ListOrgsUseCase;
+use App\Application\Orgs\UseCases\UpdateOrgUseCase;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Orgs\IndexOrgRequest;
 use App\Http\Requests\Orgs\StoreOrgRequest;
@@ -17,61 +19,16 @@ use Illuminate\Http\Response;
 
 class OrgController extends Controller
 {
-    use GeneratesUniqueOrgSlugs;
-
-    public function index(IndexOrgRequest $request): JsonResponse
+    public function index(IndexOrgRequest $request, ListOrgsUseCase $useCase): JsonResponse
     {
-        $validated = $request->validated();
-        $query = Org::query();
-        $table = (new Org)->getTable();
-
-        if (! empty($validated['search'])) {
-            $pattern = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $validated['search']).'%';
-            $query->whereRaw($table.'.name ILIKE ? ESCAPE \'\\\'', [$pattern]);
-        }
-
-        $filters = $validated['filter'] ?? [];
-        foreach ($filters as $column => $value) {
-            if ($value === null || $value === '') {
-                continue;
-            }
-
-            if ($value instanceof OrgStatus) {
-                $value = $value->value;
-            }
-
-            $query->where((string) $column, $value);
-        }
-
-        $sort = $validated['sort'] ?? 'id';
-        $direction = $validated['direction'] ?? 'desc';
-        $query->orderBy($sort, $direction);
-
-        $perPage = $validated['per_page'] ?? 15;
-
         return OrgResource::collection(
-            $query->paginate($perPage)->withQueryString(),
+            $useCase->execute($request->validated()),
         )->response();
     }
 
-    public function store(StoreOrgRequest $request): JsonResponse
+    public function store(StoreOrgRequest $request, CreateOrgUseCase $useCase): JsonResponse
     {
-        $data = $request->validated();
-        $name = $data['name'];
-        $slug = $data['slug'] ?? self::generateUniqueOrgSlug($name);
-
-        $org = Org::create([
-            'name' => $name,
-            'slug' => $slug,
-            'about' => $data['about'] ?? null,
-            'logo' => $data['logo'] ?? null,
-            'website' => $data['website'] ?? null,
-            'email' => $data['email'] ?? null,
-            'phone' => $data['phone'] ?? null,
-            'address' => $data['address'] ?? null,
-            'city' => $data['city'] ?? null,
-            'status' => OrgStatus::New,
-        ]);
+        $org = $useCase->execute($request->validated());
 
         return (new OrgResource($org))
             ->response()
@@ -84,36 +41,14 @@ class OrgController extends Controller
         return (new OrgResource($org))->response();
     }
 
-    public function update(UpdateOrgRequest $request, Org $org): JsonResponse
+    public function update(UpdateOrgRequest $request, Org $org, UpdateOrgUseCase $useCase): JsonResponse
     {
-        $data = $request->validated();
-
-        $updates = [];
-
-        foreach (['name', 'about', 'logo', 'website', 'email', 'phone', 'address', 'city', 'status'] as $key) {
-            if (array_key_exists($key, $data)) {
-                $updates[$key] = $data[$key];
-            }
-        }
-
-        if (array_key_exists('slug', $data)) {
-            if ($data['slug'] === null) {
-                $nameForSlug = (string) ($updates['name'] ?? $org->name);
-                $updates['slug'] = self::generateUniqueOrgSlug($nameForSlug, $org->id);
-            } else {
-                $updates['slug'] = $data['slug'];
-            }
-        }
-
-        $org->fill($updates);
-        $org->save();
-
-        return (new OrgResource($org))->response();
+        return (new OrgResource($useCase->execute($org, $request->validated())))->response();
     }
 
-    public function destroy(Org $org): Response
+    public function destroy(Org $org, DeleteOrgUseCase $useCase): Response
     {
-        $org->delete();
+        $useCase->execute($org);
 
         return response()->noContent();
     }
