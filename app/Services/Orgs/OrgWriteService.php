@@ -59,6 +59,8 @@ final class OrgWriteService implements OrgWritePort
         }
 
         $org->fill($updates);
+        // $org->touch();
+        // $org->forceFill(['updated_at' => now()]); // Это вызовет lifecycle-хук updated и диспатчинг события OrgUpdated
         $org->save();
 
         return $org;
