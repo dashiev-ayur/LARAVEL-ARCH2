@@ -30,6 +30,12 @@ php artisan serve
 npm run dev
 ```
 
+## Очереди - запуск воркеров
+
+```bash
+php artisan queue:work --queue=orgs
+```
+
 ## Сборка для продакшена
 
 ```bash
