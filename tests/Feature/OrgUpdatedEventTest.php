@@ -3,10 +3,13 @@
 declare(strict_types=1);
 
 use App\Events\OrgUpdated;
-use App\Listeners\LogOrgUpdated;
+use App\Jobs\OrgUpdatedProcessingJob;
+use App\Listeners\LogOrgUpdated1;
+use App\Listeners\OrgUpdatedListener;
 use App\Models\Org;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 
 test('при обновлении Org диспатчится событие OrgUpdated (через observer)', function () {
     Event::fake([
@@ -45,7 +48,7 @@ test('listener пишет в лог при OrgUpdated', function () {
         'slug' => 'acme',
     ]);
 
-    (new LogOrgUpdated)->handle(new OrgUpdated(
+    (new LogOrgUpdated1)->handle(new OrgUpdated(
         org: $org,
         changes: ['name' => 'New Name'],
         original: ['name' => 'Old Name'],
@@ -54,7 +57,7 @@ test('listener пишет в лог при OrgUpdated', function () {
     Log::shouldHaveReceived('info')
         ->once()
         ->withArgs(function (string $message, array $context) use ($org): bool {
-            expect($message)->toBe('Org updated');
+            expect($message)->toBe('Org updated 1');
 
             expect($context)->toHaveKeys([
                 'org_id',
@@ -74,6 +77,52 @@ test('listener пишет в лог при OrgUpdated', function () {
         });
 });
 
+test('OrgUpdatedProcessingJob пишет в лог те же сообщения что раньше писал handle слушателя', function () {
+    Log::spy();
+
+    $org = Org::factory()->create([
+        'name' => 'Acme',
+        'slug' => 'acme',
+    ]);
+
+    (new OrgUpdatedProcessingJob($org))->handle();
+
+    Log::shouldHaveReceived('info')->times(3);
+
+    Log::shouldHaveReceived('info')->with('Job OrgUpdatedListener:start', [
+        'org_id' => $org->getKey(),
+        'org_name' => 'Acme',
+    ]);
+
+    Log::shouldHaveReceived('info')->with('Job OrgUpdatedListener:processing', [
+        'org_id' => $org->getKey(),
+        'org_name' => 'Acme',
+    ]);
+
+    Log::shouldHaveReceived('info')->with('Job OrgUpdatedListener:success', [
+        'org_id' => $org->getKey(),
+        'org_name' => 'Acme',
+    ]);
+});
+
+test('OrgUpdatedListener ставит OrgUpdatedProcessingJob в очередь orgs', function () {
+    Queue::fake();
+
+    $org = Org::factory()->create();
+
+    (new OrgUpdatedListener)->handle(new OrgUpdated(
+        org: $org,
+        changes: [],
+        original: [],
+    ));
+
+    Queue::assertPushedOn('orgs', OrgUpdatedProcessingJob::class, function ($job, $queue) use ($org): bool {
+        return $job instanceof OrgUpdatedProcessingJob
+            && $queue === 'orgs'
+            && $job->org->is($org);
+    });
+});
+
 test('OrgUpdated вызывает listener ровно один раз', function () {
     Log::spy();
 
@@ -88,5 +137,6 @@ test('OrgUpdated вызывает listener ровно один раз', function
         original: ['name' => 'Old Name'],
     );
 
-    Log::shouldHaveReceived('info')->once();
+    Log::shouldHaveReceived('info')->with('Org updated 1', Mockery::type('array'));
+    Log::shouldHaveReceived('info')->with('Org updated 2', Mockery::type('array'));
 });

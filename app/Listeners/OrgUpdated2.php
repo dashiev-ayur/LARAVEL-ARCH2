@@ -7,11 +7,11 @@ namespace App\Listeners;
 use App\Events\OrgUpdated;
 use Illuminate\Support\Facades\Log;
 
-class LogOrgUpdated
+class OrgUpdatedListener2
 {
     public function handle(OrgUpdated $event): void
     {
-        Log::info('Org updated', [
+        Log::info('Org updated 2', [
             'org_id' => $event->org->getKey(),
             'org_name' => $event->org->name,
             'org_slug' => $event->org->slug,

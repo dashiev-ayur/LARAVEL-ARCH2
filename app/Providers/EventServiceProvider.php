@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Events\OrgUpdated;
-use App\Listeners\LogOrgUpdated;
+use App\Listeners\OrgUpdatedListener1;
+use App\Listeners\OrgUpdatedListener2;
+use App\Listeners\OrgUpdatedListener;
 use App\Models\Org;
 use App\Observers\OrgObserver;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -19,7 +21,9 @@ class EventServiceProvider extends ServiceProvider
      */
     protected $listen = [
         OrgUpdated::class => [
-            LogOrgUpdated::class,
+            OrgUpdatedListener1::class,
+            OrgUpdatedListener2::class,
+            OrgUpdatedListener::class,
         ],
     ];
 
