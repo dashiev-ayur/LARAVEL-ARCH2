@@ -30,3 +30,11 @@ test('l5-swagger ui page includes valid swagger config in data attribute', funct
         ->and($config)->toHaveKeys(['urls', 'documentationTitle', 'csrfToken', 'oauth2RedirectUrl'])
         ->and($config['urls'])->toBeArray();
 });
+
+test('l5-swagger docs route returns generated openapi json', function () {
+    $response = get('/docs');
+
+    $response->assertSuccessful();
+    expect($response->headers->get('content-type'))->toContain('application/json');
+    expect($response->json('openapi'))->toBe('3.0.0');
+});
