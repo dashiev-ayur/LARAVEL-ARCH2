@@ -1,17 +1,18 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
+import { StatsHeader } from '@/components/dashboard/stats-header';
 import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 import { dashboard } from '@/routes';
 
 export default function Dashboard() {
+    const { auth } = usePage().props;
+
     return (
         <>
             <Head title="***" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="grid auto-rows-min gap-4 md:grid-cols-3">
                     <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <div className="p-4">
-                            <h2 className="text-lg font-medium">Статистика</h2>
-                        </div>
+                        <StatsHeader userName={auth.user.name} />
                     </div>
                     <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
                         <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />

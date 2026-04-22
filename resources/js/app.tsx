@@ -5,6 +5,7 @@ import { initializeTheme } from '@/hooks/use-appearance';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import PublicLayout from './layouts/public-layout';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -19,6 +20,10 @@ createInertiaApp({
             case name.startsWith('settings/'):
             case name.startsWith('teams/'):
                 return [AppLayout, SettingsLayout];
+            // About page is not using the AppLayout
+            case name === 'about':
+                // return null;
+                return PublicLayout;
             default:
                 return AppLayout;
         }

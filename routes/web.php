@@ -19,4 +19,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
 });
 
+Route::get('/about', function () {
+    return inertia('about', [
+        'message' => 'Тут будет информация о проекте!',
+    ]);
+});
+
 require __DIR__.'/settings.php';
