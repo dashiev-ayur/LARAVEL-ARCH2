@@ -40,6 +40,7 @@ composer run dev
 ### После входа
 
 - `/{current_team}/dashboard` — дашборд; `{current_team}` — **slug** текущей команды пользователя, маршрут требует `auth`, `verified` и членство в команде.
+- `/{current_team}/{current_org}/posts` — страница `Записи` (текущая заглушка под CRUD для `posts`), также требует `auth`, `verified` и членство в команде.
 - `/invitations/{invitation}/accept` — принятие приглашения в команду (требуется `auth`).
 
 ### Настройки (`auth`; часть маршрутов — ещё и `verified`)

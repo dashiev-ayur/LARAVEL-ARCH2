@@ -283,7 +283,7 @@ test('users can switch teams', function () {
         ->actingAs($user)
         ->post(route('teams.switch', $team));
 
-    $response->assertRedirect();
+    $response->assertRedirect(route('dashboard'));
 
     expect($user->fresh()->current_team_id)->toEqual($team->id);
 });
@@ -362,7 +362,7 @@ test('switching team updates current organization fallback', function () {
         ->actingAs($user)
         ->post(route('teams.switch', $secondTeam));
 
-    $response->assertRedirect();
+    $response->assertRedirect(route('dashboard'));
 
     $refreshedUser = $user->fresh();
 

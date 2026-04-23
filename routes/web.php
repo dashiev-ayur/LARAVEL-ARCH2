@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Orgs\PostController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
@@ -13,6 +14,10 @@ Route::prefix('{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
     ->group(function () {
         Route::inertia('dashboard', 'dashboard')->name('dashboard');
+        Route::get('{current_org}/posts', [PostController::class, 'index'])->name('posts.index');
+        Route::get('{current_org}/posts/{type}', [PostController::class, 'index'])
+            ->whereIn('type', ['page', 'news', 'article', 'product'])
+            ->name('posts.byType');
     });
 
 Route::middleware(['auth'])->group(function () {

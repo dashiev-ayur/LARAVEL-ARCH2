@@ -16,6 +16,6 @@ class OrgSwitchController extends Controller
     {
         abort_unless($request->user()?->switchOrg($org), 403);
 
-        return back();
+        return to_route('dashboard');
     }
 }

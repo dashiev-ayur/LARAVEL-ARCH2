@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, FolderGit2, Info, LayoutGrid } from 'lucide-react';
+import { BookOpen, FileText, FolderGit2, Info, LayoutGrid } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -20,9 +20,13 @@ import type { NavItem } from '@/types';
 
 export function AppSidebar() {
     const page = usePage();
+    const currentOrg = page.props.currentOrg;
     const dashboardUrl = page.props.currentTeam
         ? dashboard(page.props.currentTeam.slug)
         : '/';
+    const postsUrl = page.props.currentTeam && currentOrg
+        ? `/${page.props.currentTeam.slug}/${currentOrg.slug}/posts`
+        : dashboardUrl;
 
     const mainNavItems: NavItem[] = [
         {
@@ -34,6 +38,12 @@ export function AppSidebar() {
             title: 'Главная',
             href: dashboardUrl,
             icon: LayoutGrid,
+        },
+        {
+            title: 'Записи',
+            href: postsUrl,
+            icon: FileText,
+            disabled: !currentOrg,
         },
     ];
 
