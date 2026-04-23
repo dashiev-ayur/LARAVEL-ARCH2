@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 use App\Events\OrgUpdated;
 use App\Jobs\OrgUpdatedProcessingJob;
-use App\Listeners\LogOrgUpdated1;
 use App\Listeners\OrgUpdatedListener;
+use App\Listeners\OrgUpdatedListener1;
 use App\Models\Org;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
@@ -48,7 +48,7 @@ test('listener пишет в лог при OrgUpdated', function () {
         'slug' => 'acme',
     ]);
 
-    (new LogOrgUpdated1)->handle(new OrgUpdated(
+    (new OrgUpdatedListener1)->handle(new OrgUpdated(
         org: $org,
         changes: ['name' => 'New Name'],
         original: ['name' => 'Old Name'],

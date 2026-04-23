@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\TeamRole;
+use App\Models\Org;
 use App\Models\Team;
 use App\Models\User;
 
@@ -296,6 +297,77 @@ test('users cannot switch to team they dont belong to', function () {
         ->post(route('teams.switch', $team));
 
     $response->assertForbidden();
+});
+
+test('users can switch current organization within current team', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $firstOrg = Org::factory()->create(['team_id' => $team->id]);
+    $secondOrg = Org::factory()->create(['team_id' => $team->id]);
+
+    $user->update(['current_org_id' => $firstOrg->id]);
+
+    $response = $this
+        ->actingAs($user)
+        ->post(route('orgs.switch', $secondOrg));
+
+    $response->assertRedirect();
+
+    expect($user->fresh()->current_org_id)->toEqual($secondOrg->id);
+});
+
+test('users cannot switch to organization from another team', function () {
+    $user = User::factory()->create();
+    $anotherTeam = Team::factory()->create();
+    $anotherTeam->members()->attach($user, ['role' => TeamRole::Member->value]);
+
+    $user->update(['current_team_id' => $user->personalTeam()->id]);
+
+    $orgFromAnotherTeam = Org::factory()->create(['team_id' => $anotherTeam->id]);
+
+    $response = $this
+        ->actingAs($user)
+        ->post(route('orgs.switch', $orgFromAnotherTeam));
+
+    $response->assertForbidden();
+});
+
+test('switching team updates current organization fallback', function () {
+    $user = User::factory()->create();
+    $firstTeam = $user->currentTeam;
+    $firstOrg = Org::factory()->create([
+        'team_id' => $firstTeam->id,
+        'name' => 'Zulu Org',
+    ]);
+
+    $secondTeam = Team::factory()->create(['name' => 'Second Team']);
+    $secondTeam->members()->attach($user, ['role' => TeamRole::Member->value]);
+
+    $alphaOrg = Org::factory()->create([
+        'team_id' => $secondTeam->id,
+        'name' => 'Alpha Org',
+    ]);
+    Org::factory()->create([
+        'team_id' => $secondTeam->id,
+        'name' => 'Omega Org',
+    ]);
+
+    $user->update([
+        'current_team_id' => $firstTeam->id,
+        'current_org_id' => $firstOrg->id,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->post(route('teams.switch', $secondTeam));
+
+    $response->assertRedirect();
+
+    $refreshedUser = $user->fresh();
+
+    expect($refreshedUser->current_team_id)->toEqual($secondTeam->id)
+        ->and($refreshedUser->current_org_id)->toEqual($alphaOrg->id);
 });
 
 test('guests cannot access teams', function () {

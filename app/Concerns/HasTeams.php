@@ -4,7 +4,9 @@ namespace App\Concerns;
 
 use App\Enums\TeamPermission;
 use App\Enums\TeamRole;
+use App\Http\Resources\OrgResource;
 use App\Models\Membership;
+use App\Models\Org;
 use App\Models\Team;
 use App\Support\TeamPermissions;
 use App\Support\UserTeam;
@@ -67,6 +69,16 @@ trait HasTeams
     }
 
     /**
+     * Get the user's current organization.
+     *
+     * @return BelongsTo<Org, $this>
+     */
+    public function currentOrg(): BelongsTo
+    {
+        return $this->belongsTo(Org::class, 'current_org_id');
+    }
+
+    /**
      * Get the user's personal team.
      */
     public function personalTeam(): ?Team
@@ -85,10 +97,33 @@ trait HasTeams
             return false;
         }
 
-        $this->update(['current_team_id' => $team->id]);
+        $nextOrg = ($this->currentOrg && $this->currentOrg->team_id === $team->id)
+            ? $this->currentOrg
+            : $this->fallbackOrg($team);
+
+        $this->update([
+            'current_team_id' => $team->id,
+            'current_org_id' => $nextOrg?->id,
+        ]);
         $this->setRelation('currentTeam', $team);
+        $this->setRelation('currentOrg', $nextOrg);
 
         URL::defaults(['current_team' => $team->slug]);
+
+        return true;
+    }
+
+    /**
+     * Switch to the given organization.
+     */
+    public function switchOrg(Org $org): bool
+    {
+        if (! $this->belongsToOrg($org)) {
+            return false;
+        }
+
+        $this->update(['current_org_id' => $org->id]);
+        $this->setRelation('currentOrg', $org);
 
         return true;
     }
@@ -107,6 +142,26 @@ trait HasTeams
     public function isCurrentTeam(Team $team): bool
     {
         return $this->current_team_id === $team->id;
+    }
+
+    /**
+     * Determine if the given organization is the user's current organization.
+     */
+    public function isCurrentOrg(Org $org): bool
+    {
+        return $this->current_org_id === $org->id;
+    }
+
+    /**
+     * Determine if the user can access the given organization.
+     */
+    public function belongsToOrg(Org $org): bool
+    {
+        if ($this->current_team_id === null || $org->team_id !== $this->current_team_id) {
+            return false;
+        }
+
+        return $this->teams()->where('teams.id', $org->team_id)->exists();
     }
 
     /**
@@ -145,9 +200,33 @@ trait HasTeams
     /**
      * Get the user's team as a UserTeam object.
      */
-    public function toUserTeam(Team $team): UserTeam
+    public function toUserTeam(Team $team, bool $includeOrgs = false): UserTeam
     {
         $role = $this->teamRole($team);
+
+        if ($includeOrgs) {
+            $team->loadMissing('orgs');
+        }
+
+        /** @var list<array<string, mixed>> */
+        $orgs = [];
+
+        if ($includeOrgs) {
+            $orgs = $team->orgs->map(function (Org $org) use ($team, $role): array {
+                $data = (new OrgResource($org))->toArray(request());
+                $data['team_id'] = $org->team_id;
+                $data['team'] = [
+                    'id' => $team->id,
+                    'name' => $team->name,
+                    'slug' => $team->slug,
+                    'isPersonal' => $team->is_personal,
+                    'role' => $role?->value,
+                    'roleLabel' => $role?->label(),
+                ];
+
+                return $data;
+            })->all();
+        }
 
         return new UserTeam(
             id: $team->id,
@@ -157,6 +236,7 @@ trait HasTeams
             role: $role?->value,
             roleLabel: $role?->label(),
             isCurrent: $this->isCurrentTeam($team),
+            orgs: $orgs,
         );
     }
 
@@ -183,6 +263,23 @@ trait HasTeams
         return $this->teams()
             ->when($excluding, fn ($query) => $query->where('teams.id', '!=', $excluding->id))
             ->orderByRaw('LOWER(teams.name)')
+            ->first();
+    }
+
+    /**
+     * Get fallback organization for a specific team or current team.
+     */
+    public function fallbackOrg(?Team $team = null): ?Org
+    {
+        $teamId = $team?->id ?? $this->current_team_id;
+
+        if ($teamId === null) {
+            return null;
+        }
+
+        return Org::query()
+            ->where('team_id', $teamId)
+            ->orderByRaw('LOWER(name)')
             ->first();
     }
 

@@ -1,3 +1,5 @@
+import type { Org } from './orgs';
+
 export type TeamRole = 'owner' | 'admin' | 'member';
 
 export type Team = {
@@ -8,6 +10,8 @@ export type Team = {
     role?: TeamRole;
     roleLabel?: string;
     isCurrent?: boolean;
+    /** Заполняется для shared `currentTeam` (Inertia). */
+    orgs?: Org[];
 };
 
 export type TeamMember = {

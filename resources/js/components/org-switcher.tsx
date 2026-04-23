@@ -1,60 +1,31 @@
 import { router, usePage } from '@inertiajs/react';
-import { Check, ChevronsUpDown, Plus, Users } from 'lucide-react';
-import CreateTeamModal from '@/components/create-team-modal';
+import { Building2, Check, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { switchMethod } from '@/routes/teams';
-import type { Team } from '@/types';
+import { switchMethod } from '@/routes/orgs';
+import type { Org } from '@/types';
 
-type TeamSwitcherProps = {
+type OrgSwitcherProps = {
     inHeader?: boolean;
 };
 
-export function TeamSwitcher({ inHeader = false }: TeamSwitcherProps) {
+export function OrgSwitcher({ inHeader = false }: OrgSwitcherProps) {
     const page = usePage();
     const isMobile = useIsMobile();
-    const currentTeam = page.props.currentTeam;
-    const teams = page.props.teams ?? [];
-    const refreshTeamContext = () => {
-        router.reload({
-            only: ['currentTeam', 'teams', 'currentOrg', 'orgs'],
-        });
-    };
+    const currentOrg = page.props.currentOrg;
+    const orgs = page.props.orgs ?? [];
 
-    const switchTeam = (team: Team) => {
-        const previousTeamSlug = currentTeam?.slug;
-
-        router.visit(switchMethod(team.slug), {
+    const switchOrg = (org: Org) => {
+        router.visit(switchMethod(org.id), {
             onFinish: () => {
-                if (!previousTeamSlug || typeof window === 'undefined') {
-                    refreshTeamContext();
-
-                    return;
-                }
-
-                const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-                const segment = `/${previousTeamSlug}`;
-
-                if (currentUrl.includes(segment)) {
-                    router.visit(currentUrl.replace(segment, `/${team.slug}`), {
-                        replace: true,
-                        onSuccess: () => {
-                            refreshTeamContext();
-                        },
-                    });
-
-                    return;
-                }
-
-                refreshTeamContext();
+                router.reload();
             },
         });
     };
@@ -64,14 +35,14 @@ export function TeamSwitcher({ inHeader = false }: TeamSwitcherProps) {
             <DropdownMenuTrigger asChild>
                 <Button
                     variant="ghost"
-                    data-test="team-switcher-trigger"
+                    data-test="org-switcher-trigger"
                     className={
                         inHeader
                             ? 'h-8 gap-1 px-2'
                             : 'w-full justify-start px-2 has-[>svg]:px-2 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
                     }
                 >
-                    <Users
+                    <Building2
                         className={
                             inHeader
                                 ? 'hidden'
@@ -92,7 +63,7 @@ export function TeamSwitcher({ inHeader = false }: TeamSwitcherProps) {
                                     : 'truncate font-semibold'
                             }
                         >
-                            {currentTeam?.name ?? 'Select team'}
+                            {currentOrg?.name ?? 'Select organization'}
                         </span>
                     </div>
                     <ChevronsUpDown
@@ -115,21 +86,26 @@ export function TeamSwitcher({ inHeader = false }: TeamSwitcherProps) {
                 sideOffset={inHeader ? undefined : 4}
             >
                 <DropdownMenuLabel className="text-xs text-muted-foreground">
-                    Teams
+                    Organizations
                 </DropdownMenuLabel>
-                {teams.map((team) => (
+                {orgs.length === 0 && (
+                    <DropdownMenuItem disabled>
+                        No organizations
+                    </DropdownMenuItem>
+                )}
+                {orgs.map((org) => (
                     <DropdownMenuItem
-                        key={team.id}
-                        data-test="team-switcher-item"
+                        key={org.id}
+                        data-test="org-switcher-item"
                         className={
                             inHeader
                                 ? 'cursor-pointer gap-2'
                                 : 'cursor-pointer gap-2 p-2'
                         }
-                        onSelect={() => switchTeam(team)}
+                        onSelect={() => switchOrg(org)}
                     >
-                        {team.name}
-                        {currentTeam?.id === team.id && (
+                        {org.name}
+                        {currentOrg?.id === org.id && (
                             <Check
                                 className={
                                     inHeader
@@ -140,21 +116,6 @@ export function TeamSwitcher({ inHeader = false }: TeamSwitcherProps) {
                         )}
                     </DropdownMenuItem>
                 ))}
-                <DropdownMenuSeparator />
-                <CreateTeamModal>
-                    <DropdownMenuItem
-                        data-test="team-switcher-new-team"
-                        className={
-                            inHeader
-                                ? 'cursor-pointer gap-2'
-                                : 'cursor-pointer gap-2 p-2'
-                        }
-                        onSelect={(event) => event.preventDefault()}
-                    >
-                        <Plus className={inHeader ? 'size-4' : 'h-4 w-4'} />
-                        <span className="text-muted-foreground">New team</span>
-                    </DropdownMenuItem>
-                </CreateTeamModal>
             </DropdownMenuContent>
         </DropdownMenu>
     );

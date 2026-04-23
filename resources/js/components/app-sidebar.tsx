@@ -4,6 +4,7 @@ import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
+import { OrgSwitcher } from '@/components/org-switcher';
 import { TeamSwitcher } from '@/components/team-switcher';
 import {
     Sidebar,
@@ -64,6 +65,9 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <TeamSwitcher />
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <OrgSwitcher key={page.props.currentTeam?.id ?? 'no-team'} />
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>

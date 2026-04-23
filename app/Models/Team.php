@@ -100,4 +100,14 @@ class Team extends Model
     {
         return 'slug';
     }
+
+    /**
+     * Организации, принадлежащие команде
+     *
+     * @return HasMany<Org, $this>
+     */
+    public function orgs(): HasMany
+    {
+        return $this->hasMany(Org::class, 'team_id');
+    }
 }

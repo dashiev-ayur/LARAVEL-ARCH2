@@ -1,4 +1,5 @@
 import type { Auth } from '@/types/auth';
+import type { Org } from '@/types/orgs';
 import type { Team } from '@/types/teams';
 
 declare module '@inertiajs/core' {
@@ -9,6 +10,8 @@ declare module '@inertiajs/core' {
             sidebarOpen: boolean;
             currentTeam: Team | null;
             teams: Team[];
+            currentOrg: Org | null;
+            orgs: Org[];
             [key: string]: unknown;
         };
     }
