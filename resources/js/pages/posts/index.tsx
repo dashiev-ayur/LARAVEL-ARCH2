@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import {
     createColumnHelper,
     flexRender,
@@ -8,37 +8,15 @@ import {
 import { useMemo } from 'react';
 import type { PostListRow } from '@/entities/post';
 import { PostStatusCell, PostTitleSlugCell } from '@/entities/post';
-import { ButtonNewPost } from '@/features/post';
+import { PostsListToolbar, usePostsListPage } from '@/features/post';
 import { dashboard } from '@/routes';
-import { Button } from '@/shared/ui/button';
 import { Table } from '@/shared/ui/table';
-
-type PostTypeUiItem = {
-    filterButtonTitle: string;
-    newButtonTitle: string;
-};
-
-type PostsPageProps = {
-    currentTeam: { slug: string } | null;
-    currentOrg: { slug: string } | null;
-    /** Код активного типа из контроллера/URL (как `PostType` на бэке). */
-    activeType: string;
-    postTypeUi: Record<string, PostTypeUiItem>;
-    /** Порядок и набор кодов — `PostType::values()` на бэке; union на фронте не дублируем. */
-    postTypes: readonly string[];
-    posts: PostListRow[];
-};
 
 const columnHelper = createColumnHelper<PostListRow>();
 
 export default function PostsIndex() {
-    const page = usePage<PostsPageProps>();
-    const currentTeam = page.props.currentTeam;
-    const currentOrg = page.props.currentOrg;
-    const activeType = page.props.activeType;
-    const postTypeUi = page.props.postTypeUi;
-    const postTypes = page.props.postTypes;
-    const posts = page.props.posts;
+    const { props } = usePostsListPage();
+    const { currentTeam, currentOrg, activeType, postTypeUi, postTypes, posts } = props;
 
     const columns = useMemo(
         () => [
@@ -72,14 +50,6 @@ export default function PostsIndex() {
         getCoreRowModel: getCoreRowModel(),
     });
 
-    const buildTypeUrl = (type: string): string => {
-        if (!currentTeam || !currentOrg) {
-            return '/posts';
-        }
-
-        return `/${currentTeam.slug}/${currentOrg.slug}/posts/${type}`;
-    };
-
     return (
         <>
             <Head title="Записи" />
@@ -91,21 +61,12 @@ export default function PostsIndex() {
 
                 <Table.Card className="border-sidebar-border/70 dark:border-sidebar-border">
                     <Table.Toolbar className="border-sidebar-border/70 dark:border-sidebar-border">
-                        <div className="flex min-w-0 flex-wrap items-center gap-2">
-                            {postTypes.map((type) => {
-                                const isActive = type === activeType;
-                                const label = postTypeUi[type]?.filterButtonTitle ?? type;
-
-                                return (
-                                    <Button key={type} variant={isActive ? 'default' : 'outline'} size="sm" asChild>
-                                        <Link href={buildTypeUrl(type)}>{label}</Link>
-                                    </Button>
-                                );
-                            })}
-                        </div>
-                        <ButtonNewPost
-                            className="shrink-0"
-                            newButtonTitle={postTypeUi[activeType]?.newButtonTitle ?? 'Новая запись'}
+                        <PostsListToolbar
+                            currentTeam={currentTeam}
+                            currentOrg={currentOrg}
+                            activeType={activeType}
+                            postTypes={postTypes}
+                            postTypeUi={postTypeUi}
                         />
                     </Table.Toolbar>
 

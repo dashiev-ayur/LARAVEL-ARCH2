@@ -62,7 +62,7 @@ shared - Переиспользуемый код (UI-кит, утилиты, ine
 2. **Алиасы** — ввести `@/shared`, `@/entities`, `@/features`, `@/widgets` (Vite/TS), старые пути оставить до миграции.
 3. `**shared` первым** — UI-кит, `lib`, общие UI-хуки/типы; граница: `shared` не тянет верхние слои; после переноса — сборка.
 4. `**entities` (выполнено)** — слайсы `user`, `team`, `org`, `post` под [`resources/js/entities/`](resources/js/entities/); в каждом слайсе `model/types` (контракт сущности, согласован с `@/types` через `Pick` / `type` = DTO); UI: `UserInfo` (`@/entities/user`), `PostTitleSlugCell` / `PostStatusCell` + `PostListRow` (`@/entities/post`); `team`/`org` — публичные типы + `TeamEntity` / `OrgEntity` для потребителей. Импорты только вниз по слоям; сценарные switcher’ы остаются в `components/`.
-5. `**features**` — пилот одного сценария (например, записи: фильтр + действие); Inertia-логика здесь, не в `shared`.
+5. `**features**` (пилот) — `resources/js/features/post/`: сценарий «список записей» — `PostTypeFilter` (Inertia `Link` + `byType.url` из `@/routes/posts`), `ButtonNewPost` (опционально `href` через Inertia, иначе заглушка), `PostsListToolbar`, хук `usePostsListPage` и типы `PostsListPageProps`; страница `pages/posts/index` только композиция + таблица.
 6. `**widgets**` — крупные блоки (сайдбар, шапка) по одному файлу, композиция `features` + `entities` + `shared`.
 7. `**pages**` — убрать толстую разметку/логику, оставить композицию + пропы Inertia; проверка роутов и wayfinder.
 8. **Закрепление** — (опц.) линт границ импорта, обновить README/док, регрессия e2e/PHP feature-тестов Inertia.

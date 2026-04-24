@@ -1,5 +1,6 @@
 /**
  * Слой features — сценарии (фильтры, смена org, 2FA и т.д.).
- * Заглушка этапа 1.
+ * Пилот: `@/features/post` — список записей (фильтр + действие).
  */
-export {};
+export type { PostTypeUiItem, PostsListPageProps } from './post';
+export { ButtonNewPost, PostTypeFilter, PostsListToolbar, usePostsListPage, buildPostTypeFilterHref } from './post';
