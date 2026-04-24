@@ -6,20 +6,12 @@ import {
     useReactTable,
 } from '@tanstack/react-table';
 import { useMemo } from 'react';
+import type { PostListRow } from '@/entities/post';
+import { PostStatusCell, PostTitleSlugCell } from '@/entities/post';
 import { ButtonNewPost } from '@/features/post';
 import { dashboard } from '@/routes';
 import { Button } from '@/shared/ui/button';
 import { Table } from '@/shared/ui/table';
-
-type PostRow = {
-    id: number;
-    type: string;
-    status: string;
-    slug: string;
-    title: string;
-    published_at: string | null;
-    updated_at: string | null;
-};
 
 type PostTypeUiItem = {
     filterButtonTitle: string;
@@ -34,10 +26,10 @@ type PostsPageProps = {
     postTypeUi: Record<string, PostTypeUiItem>;
     /** Порядок и набор кодов — `PostType::values()` на бэке; union на фронте не дублируем. */
     postTypes: readonly string[];
-    posts: PostRow[];
+    posts: PostListRow[];
 };
 
-const columnHelper = createColumnHelper<PostRow>();
+const columnHelper = createColumnHelper<PostListRow>();
 
 export default function PostsIndex() {
     const page = usePage<PostsPageProps>();
@@ -53,19 +45,12 @@ export default function PostsIndex() {
             columnHelper.accessor('title', {
                 header: 'Заголовок',
                 cell: ({ row }) => (
-                    <div className="flex flex-col gap-1">
-                        <span className="font-medium text-foreground">{row.original.title}</span>
-                        <span className="text-xs text-muted-foreground">/{row.original.slug}</span>
-                    </div>
+                    <PostTitleSlugCell title={row.original.title} slug={row.original.slug} />
                 ),
             }),
             columnHelper.accessor('status', {
                 header: 'Статус',
-                cell: ({ getValue }) => (
-                    <span className="inline-flex rounded-md border px-2 py-0.5 text-xs">
-                        {getValue()}
-                    </span>
-                ),
+                cell: ({ getValue }) => <PostStatusCell status={getValue()} />,
             }),
             columnHelper.accessor('published_at', {
                 header: 'Публикация',

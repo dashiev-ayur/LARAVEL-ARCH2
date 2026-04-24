@@ -1,7 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import { ChevronsUpDown } from 'lucide-react';
-import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
+import { UserInfo } from '@/entities/user';
 import { useIsMobile } from '@/shared/hooks/use-mobile';
 import {
     DropdownMenu,

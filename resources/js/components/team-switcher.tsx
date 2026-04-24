@@ -1,6 +1,7 @@
 import { router, usePage } from '@inertiajs/react';
 import { Check, ChevronsUpDown, Plus, Users } from 'lucide-react';
 import CreateTeamModal from '@/components/create-team-modal';
+import type { TeamEntity } from '@/entities/team';
 import { switchMethod } from '@/routes/teams';
 import { useIsMobile } from '@/shared/hooks/use-mobile';
 import { Button } from '@/shared/ui/button';
@@ -12,7 +13,6 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/shared/ui/dropdown-menu';
-import type { Team } from '@/types';
 
 type TeamSwitcherProps = {
     inHeader?: boolean;
@@ -29,7 +29,7 @@ export function TeamSwitcher({ inHeader = false }: TeamSwitcherProps) {
         });
     };
 
-    const switchTeam = (team: Team) => {
+    const switchTeam = (team: TeamEntity) => {
         const previousTeamSlug = currentTeam?.slug;
 
         router.visit(switchMethod(team.slug), {

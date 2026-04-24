@@ -1,5 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
 import { Building2, Check, ChevronsUpDown } from 'lucide-react';
+import type { OrgEntity } from '@/entities/org';
 import { switchMethod } from '@/routes/orgs';
 import { useIsMobile } from '@/shared/hooks/use-mobile';
 import { Button } from '@/shared/ui/button';
@@ -10,7 +11,6 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from '@/shared/ui/dropdown-menu';
-import type { Org } from '@/types';
 
 type OrgSwitcherProps = {
     inHeader?: boolean;
@@ -22,7 +22,7 @@ export function OrgSwitcher({ inHeader = false }: OrgSwitcherProps) {
     const currentOrg = page.props.currentOrg;
     const orgs = page.props.orgs ?? [];
 
-    const switchOrg = (org: Org) => {
+    const switchOrg = (org: OrgEntity) => {
         router.visit(switchMethod(org.id), {
             onFinish: () => {
                 router.reload();

@@ -50,12 +50,18 @@ shared - Переиспользуемый код (UI-кит, утилиты, ine
 - **`shared/hooks`** (нейтральные): `use-clipboard`, `use-mobile`, `use-initials`, `use-appearance`, `use-current-url`, `use-mobile-navigation`, `use-flash-toast`.
 - **Вне `shared`**: `use-two-factor-auth` остаётся в `resources/js/hooks` до отдельной фичи; кнопка «новая запись» — `features/post` (`ButtonNewPost`, импорт `from '@/features/post'`). Алиасы shadcn в `components.json` указывают на `shared/ui` и `shared/lib`.
 
+## Этап: entities (выполнено)
+
+- **Слайсы** — `resources/js/entities/{user,team,org,post}/`, публичный вход `index.ts` (и опционально корневой `resources/js/entities/index.ts`).
+- **Модель** — `model/types.ts`: контракты, согласованные с DTO Inertia из `@/types` (без дублирования полей); для строки списка постов — `PostListRow` (отдельного DTO в `types/` нет, определён в слайсе).
+- **UI** — `UserInfo` (user); ячейки таблицы поста — `PostTitleSlugCell`, `PostStatusCell` (post). Смена org/team через switcher’ы в `components/`; типы `OrgEntity` / `TeamEntity` импортируют из `@/entities/org` и `@/entities/team`.
+
 ## Поэтапный план перехода (чтобы ничего не сломать)
 
 1. **Правила** — согласовать смыслы слоёв, entrypoints слайсов, тонкие `pages` + `usePage` без дублирования бэка.
 2. **Алиасы** — ввести `@/shared`, `@/entities`, `@/features`, `@/widgets` (Vite/TS), старые пути оставить до миграции.
 3. `**shared` первым** — UI-кит, `lib`, общие UI-хуки/типы; граница: `shared` не тянет верхние слои; после переноса — сборка.
-4. `**entities`** — вынести мелкие куски сущностей, только где уже повтор/явная сущность; импорты снизу вверх.
+4. `**entities` (выполнено)** — слайсы `user`, `team`, `org`, `post` под [`resources/js/entities/`](resources/js/entities/); в каждом слайсе `model/types` (контракт сущности, согласован с `@/types` через `Pick` / `type` = DTO); UI: `UserInfo` (`@/entities/user`), `PostTitleSlugCell` / `PostStatusCell` + `PostListRow` (`@/entities/post`); `team`/`org` — публичные типы + `TeamEntity` / `OrgEntity` для потребителей. Импорты только вниз по слоям; сценарные switcher’ы остаются в `components/`.
 5. `**features**` — пилот одного сценария (например, записи: фильтр + действие); Inertia-логика здесь, не в `shared`.
 6. `**widgets**` — крупные блоки (сайдбар, шапка) по одному файлу, композиция `features` + `entities` + `shared`.
 7. `**pages**` — убрать толстую разметку/логику, оставить композицию + пропы Inertia; проверка роутов и wayfinder.

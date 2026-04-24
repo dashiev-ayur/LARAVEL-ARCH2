@@ -1,6 +1,6 @@
 import { Link, router } from '@inertiajs/react';
 import { LogOut, Settings } from 'lucide-react';
-import { UserInfo } from '@/components/user-info';
+import { UserInfo } from '@/entities/user';
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
 import { useMobileNavigation } from '@/shared/hooks/use-mobile-navigation';
