@@ -7,6 +7,7 @@ import { NavUser } from '@/components/nav-user';
 import { OrgSwitcher } from '@/components/org-switcher';
 import { TeamSwitcher } from '@/components/team-switcher';
 import { dashboard } from '@/routes';
+import { index as postsIndex } from '@/routes/posts';
 import {
     Sidebar,
     SidebarContent,
@@ -21,12 +22,15 @@ import type { NavItem } from '@/types';
 export function AppSidebar() {
     const page = usePage();
     const currentOrg = page.props.currentOrg;
-    const dashboardUrl = page.props.currentTeam
-        ? dashboard(page.props.currentTeam.slug)
-        : '/';
-    const postsUrl = page.props.currentTeam && currentOrg
-        ? `/${page.props.currentTeam.slug}/${currentOrg.slug}/posts`
-        : dashboardUrl;
+    const currentTeam = page.props.currentTeam;
+    const dashboardUrl = currentTeam ? dashboard(currentTeam.slug) : '/';
+    const postsUrl =
+        currentTeam && currentOrg
+            ? postsIndex.url({
+                  current_team: currentTeam.slug,
+                  current_org: currentOrg.slug,
+              })
+            : dashboardUrl;
 
     const mainNavItems: NavItem[] = [
         {
@@ -77,7 +81,9 @@ export function AppSidebar() {
                         <TeamSwitcher />
                     </SidebarMenuItem>
                     <SidebarMenuItem>
-                        <OrgSwitcher key={page.props.currentTeam?.id ?? 'no-team'} />
+                        <OrgSwitcher
+                            key={page.props.currentTeam?.id ?? 'no-team'}
+                        />
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
