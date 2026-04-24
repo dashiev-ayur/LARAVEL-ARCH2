@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import { Table } from '@/components/table';
+import { ButtonNewPost } from '@/components/ui/button-new-post';
 import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes';
 
@@ -20,11 +21,19 @@ type PostRow = {
     updated_at: string | null;
 };
 
+type PostTypeUiItem = {
+    filterButtonTitle: string;
+    newButtonTitle: string;
+};
+
 type PostsPageProps = {
     currentTeam: { slug: string } | null;
     currentOrg: { slug: string } | null;
+    /** Код активного типа из контроллера/URL (как `PostType` на бэке). */
     activeType: string;
-    postTypes: string[];
+    postTypeUi: Record<string, PostTypeUiItem>;
+    /** Порядок и набор кодов — `PostType::values()` на бэке; union на фронте не дублируем. */
+    postTypes: readonly string[];
     posts: PostRow[];
 };
 
@@ -35,6 +44,7 @@ export default function PostsIndex() {
     const currentTeam = page.props.currentTeam;
     const currentOrg = page.props.currentOrg;
     const activeType = page.props.activeType;
+    const postTypeUi = page.props.postTypeUi;
     const postTypes = page.props.postTypes;
     const posts = page.props.posts;
 
@@ -96,17 +106,22 @@ export default function PostsIndex() {
 
                 <Table.Card className="border-sidebar-border/70 dark:border-sidebar-border">
                     <Table.Toolbar className="border-sidebar-border/70 dark:border-sidebar-border">
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
                             {postTypes.map((type) => {
                                 const isActive = type === activeType;
+                                const label = postTypeUi[type]?.filterButtonTitle ?? type;
 
                                 return (
                                     <Button key={type} variant={isActive ? 'default' : 'outline'} size="sm" asChild>
-                                        <Link href={buildTypeUrl(type)}>{type}</Link>
+                                        <Link href={buildTypeUrl(type)}>{label}</Link>
                                     </Button>
                                 );
                             })}
                         </div>
+                        <ButtonNewPost
+                            className="shrink-0"
+                            newButtonTitle={postTypeUi[activeType]?.newButtonTitle ?? 'Новая запись'}
+                        />
                     </Table.Toolbar>
 
                     <Table.ScrollArea>

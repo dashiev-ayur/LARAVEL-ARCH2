@@ -78,6 +78,9 @@ test('posts page filters records by type from url', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('posts/index')
             ->where('activeType', 'news')
+            ->has('postTypeUi', 4)
+            ->where('postTypeUi.news.filterButtonTitle', 'Новости')
+            ->where('postTypeUi.news.newButtonTitle', 'Новая новость')
             ->has('posts', 1)
             ->where('posts.0.title', 'News Post')
             ->where('posts.0.type', 'news')
@@ -118,6 +121,8 @@ test('posts page defaults to page type when type is omitted', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('posts/index')
             ->where('activeType', 'page')
+            ->where('postTypeUi.page.filterButtonTitle', 'Страницы')
+            ->where('postTypeUi.page.newButtonTitle', 'Новая страница')
             ->has('posts', 1)
             ->where('posts.0.title', 'Default Page Post')
             ->where('posts.0.type', 'page'),

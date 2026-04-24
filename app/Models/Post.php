@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PostType;
 use Database\Factories\PostFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -37,6 +38,7 @@ class Post extends Model
     protected function casts(): array
     {
         return [
+            'type' => PostType::class,
             'published_at' => 'datetime',
             'deleted_at' => 'datetime',
         ];

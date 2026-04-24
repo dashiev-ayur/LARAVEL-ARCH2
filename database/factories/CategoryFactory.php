@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\PostType;
 use App\Models\Category;
 use App\Models\Org;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -24,7 +25,7 @@ class CategoryFactory extends Factory
         return [
             'org_id' => Org::factory(),
             'parent_id' => null,
-            'type' => fake()->randomElement(['page', 'news', 'article', 'product']),
+            'type' => fake()->randomElement(PostType::values()),
             'acl_resource' => fake()->optional()->randomElement(['admin', 'news.admin', 'content.editor']),
             'slug' => Str::slug($title).'-'.fake()->unique()->numerify('####'),
             'title' => $title,

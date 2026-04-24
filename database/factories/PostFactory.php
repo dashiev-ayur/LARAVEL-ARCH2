@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\PostType;
 use App\Models\Org;
 use App\Models\Post;
 use App\Models\User;
@@ -26,7 +27,7 @@ class PostFactory extends Factory
             'org_id' => Org::factory(),
             'author_id' => User::factory(),
             'parent_id' => null,
-            'type' => fake()->randomElement(['page', 'news', 'article', 'product']),
+            'type' => fake()->randomElement(PostType::values()),
             'status' => fake()->randomElement(['draft', 'scheduled', 'published', 'archived']),
             'acl_resource' => fake()->optional()->randomElement(['admin', 'news.admin', 'content.editor']),
             'slug' => Str::slug($title).'-'.fake()->unique()->numerify('####'),

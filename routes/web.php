@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\PostType;
 use App\Http\Controllers\Orgs\PostController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
@@ -16,7 +17,7 @@ Route::prefix('{current_team}')
         Route::inertia('dashboard', 'dashboard')->name('dashboard');
         Route::get('{current_org}/posts', [PostController::class, 'index'])->name('posts.index');
         Route::get('{current_org}/posts/{type}', [PostController::class, 'index'])
-            ->whereIn('type', ['page', 'news', 'article', 'product'])
+            ->whereIn('type', PostType::values())
             ->name('posts.byType');
     });
 

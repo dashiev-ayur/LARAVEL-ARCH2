@@ -4,9 +4,11 @@ namespace App\Providers;
 
 use App\Application\Orgs\Ports\OrgListingPort;
 use App\Application\Orgs\Ports\OrgWritePort;
+use App\PostTypes\PostTypeHandlerFactory;
 use App\Services\Orgs\OrgListingService;
 use App\Services\Orgs\OrgWriteService;
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -21,6 +23,13 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(OrgWritePort::class, OrgWriteService::class);
         $this->app->bind(OrgListingPort::class, OrgListingService::class);
+
+        $this->app->bind(PostTypeHandlerFactory::class, function (Container $app) {
+            return new PostTypeHandlerFactory(
+                $app,
+                config('post_types.handlers', []),
+            );
+        });
     }
 
     /**

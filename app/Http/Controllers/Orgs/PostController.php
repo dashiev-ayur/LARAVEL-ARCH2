@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Orgs;
 
+use App\Enums\PostType;
 use App\Http\Controllers\Controller;
 use App\Models\Org;
+use App\PostTypes\PostTypeHandlerFactory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -11,17 +13,15 @@ use Inertia\Response;
 class PostController extends Controller
 {
     /**
-     * Поддерживаемые типы записей в UI.
-     *
-     * @var list<string>
-     */
-    private const TYPES = ['page', 'news', 'article', 'product'];
-
-    /**
      * Показать страницу управления записями.
      */
-    public function index(Request $request, string $current_team, string $current_org, ?string $type = null): Response
-    {
+    public function index(
+        Request $request,
+        PostTypeHandlerFactory $postTypeHandlerFactory,
+        string $current_team,
+        string $current_org,
+        ?string $type = null,
+    ): Response {
         $user = $request->user();
         $org = $user?->currentOrg;
 
@@ -35,7 +35,9 @@ class PostController extends Controller
             $user->switchOrg($org);
         }
 
-        $activeType = in_array($type, self::TYPES, true) ? $type : self::TYPES[0];
+        $activeType = in_array($type, PostType::values(), true)
+            ? $type
+            : PostType::Page->value;
 
         $posts = $org->posts()
             ->where('type', $activeType)
@@ -52,9 +54,21 @@ class PostController extends Controller
             ])
             ->all();
 
+        $postTypeUi = collect(PostType::cases())
+            ->mapWithKeys(function (PostType $postType) use ($postTypeHandlerFactory) {
+                return [
+                    $postType->value => $postTypeHandlerFactory
+                        ->make($postType)
+                        ->toData()
+                        ->toInertiaArray(),
+                ];
+            })
+            ->all();
+
         return Inertia::render('posts/index', [
             'activeType' => $activeType,
-            'postTypes' => self::TYPES,
+            'postTypeUi' => $postTypeUi,
+            'postTypes' => PostType::values(),
             'posts' => array_values($posts),
         ]);
     }
