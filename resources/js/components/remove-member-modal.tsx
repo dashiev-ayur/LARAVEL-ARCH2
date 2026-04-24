@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { destroy as destroyMember } from '@/routes/teams/members';
+import { Button } from '@/shared/ui/button';
 import {
     Dialog,
     DialogClose,
@@ -9,8 +10,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog';
-import { destroy as destroyMember } from '@/routes/teams/members';
+} from '@/shared/ui/dialog';
 import type { Team, TeamMember } from '@/types';
 
 type Props = {

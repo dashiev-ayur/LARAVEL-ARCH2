@@ -6,6 +6,7 @@ import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { OrgSwitcher } from '@/components/org-switcher';
 import { TeamSwitcher } from '@/components/team-switcher';
+import { dashboard } from '@/routes';
 import {
     Sidebar,
     SidebarContent,
@@ -14,8 +15,7 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-} from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+} from '@/shared/ui/sidebar';
 import type { NavItem } from '@/types';
 
 export function AppSidebar() {

@@ -1,12 +1,12 @@
 import type { ComponentPropsWithoutRef } from 'react';
+import { toUrl } from '@/shared/lib/utils';
 import {
     SidebarGroup,
     SidebarGroupContent,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-} from '@/components/ui/sidebar';
-import { toUrl } from '@/lib/utils';
+} from '@/shared/ui/sidebar';
 import type { NavItem } from '@/types';
 
 export function NavFooter({

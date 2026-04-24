@@ -1,5 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useInitials } from '@/hooks/use-initials';
+import { useInitials } from '@/shared/hooks/use-initials';
+import { Avatar, AvatarFallback, AvatarImage } from '@/shared/ui/avatar';
 import type { Team, User } from '@/types';
 
 export function UserInfo({

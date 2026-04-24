@@ -1,10 +1,10 @@
 import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
 import { store } from '@/routes/password/confirm';
+import { Button } from '@/shared/ui/button';
+import { Label } from '@/shared/ui/label';
+import { Spinner } from '@/shared/ui/spinner';
 
 export default function ConfirmPassword() {
     return (

@@ -1,7 +1,7 @@
 import { Head, usePage } from '@inertiajs/react';
 import { StatsHeader } from '@/components/dashboard/stats-header';
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 import { dashboard } from '@/routes';
+import { PlaceholderPattern } from '@/shared/ui/placeholder-pattern';
 
 export default function Dashboard() {
     const { auth } = usePage().props;

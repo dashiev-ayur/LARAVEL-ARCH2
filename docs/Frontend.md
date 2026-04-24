@@ -43,6 +43,13 @@ shared - Переиспользуемый код (UI-кит, утилиты, ine
 - **Каталоги**: `resources/js/shared`, `entities`, `features`, `widgets` с **`index.ts`**-заглушками (публичный API слоёв по мере миграции).
 - **Использование**: `import '…' from '@/shared'`, `from '@/shared/…'`, и аналогично для остальных слоёв.
 
+## Этап: shared (выполнено)
+
+- **`shared/lib`** — утилиты, в т.ч. `cn` и `toUrl` (`utils.ts`).
+- **`shared/ui`** — shadcn-примитивы; таблица — `shared/ui/table` (публичный вход как `@/shared/ui/table`).
+- **`shared/hooks`** (нейтральные): `use-clipboard`, `use-mobile`, `use-initials`, `use-appearance`, `use-current-url`, `use-mobile-navigation`, `use-flash-toast`.
+- **Вне `shared`**: `use-two-factor-auth` остаётся в `resources/js/hooks` до отдельной фичи; кнопка «новая запись» — `features/post` (`ButtonNewPost`, импорт `from '@/features/post'`). Алиасы shadcn в `components.json` указывают на `shared/ui` и `shared/lib`.
+
 ## Поэтапный план перехода (чтобы ничего не сломать)
 
 1. **Правила** — согласовать смыслы слоёв, entrypoints слайсов, тонкие `pages` + `usePage` без дублирования бэка.

@@ -1,4 +1,4 @@
-/* eslint-disable react-refresh/only-export-components -- составной Table: один публичный экспорт, подкомпоненты привязаны через Object.assign */
+/* Составной Table: публичный API через Object.assign; подкомпоненты — приватные. */
 import type { HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from "react";
 
 import type { TableCellVariant } from "./table-column-variant";

@@ -5,8 +5,10 @@ export function tableColumnVariant(columnId: string): TableCellVariant {
   if (columnId === "select") {
     return "select";
   }
+
   if (columnId === "actions") {
     return "actions";
   }
+
   return "default";
 }

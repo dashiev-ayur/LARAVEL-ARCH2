@@ -4,7 +4,7 @@ import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileCo
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/shared/ui/button';
 import {
     Dialog,
     DialogClose,
@@ -13,8 +13,8 @@ import {
     DialogFooter,
     DialogTitle,
     DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+} from '@/shared/ui/dialog';
+import { Label } from '@/shared/ui/label';
 
 export default function DeleteUser() {
     const passwordInput = useRef<HTMLInputElement>(null);

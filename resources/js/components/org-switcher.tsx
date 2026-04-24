@@ -1,15 +1,15 @@
 import { router, usePage } from '@inertiajs/react';
 import { Building2, Check, ChevronsUpDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { switchMethod } from '@/routes/orgs';
+import { useIsMobile } from '@/shared/hooks/use-mobile';
+import { Button } from '@/shared/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { switchMethod } from '@/routes/orgs';
+} from '@/shared/ui/dropdown-menu';
 import type { Org } from '@/types';
 
 type OrgSwitcherProps = {

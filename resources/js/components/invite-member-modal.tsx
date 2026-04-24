@@ -1,7 +1,8 @@
 import { Form } from '@inertiajs/react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
+import { store as storeInvitation } from '@/routes/teams/invitations';
+import { Button } from '@/shared/ui/button';
 import {
     Dialog,
     DialogClose,
@@ -10,17 +11,16 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from '@/shared/ui/dialog';
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '@/components/ui/select';
-import { store as storeInvitation } from '@/routes/teams/invitations';
+} from '@/shared/ui/select';
 import type { RoleOption, Team } from '@/types';
 
 type Props = {

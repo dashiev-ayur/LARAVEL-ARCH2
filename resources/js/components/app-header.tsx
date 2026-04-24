@@ -5,37 +5,37 @@ import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { OrgSwitcher } from '@/components/org-switcher';
 import { TeamSwitcher } from '@/components/team-switcher';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+import { UserMenuContent } from '@/components/user-menu-content';
+import { dashboard } from '@/routes';
+import { useCurrentUrl } from '@/shared/hooks/use-current-url';
+import { useInitials } from '@/shared/hooks/use-initials';
+import { cn, toUrl } from '@/shared/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/shared/ui/avatar';
+import { Button } from '@/shared/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/shared/ui/dropdown-menu';
 import {
     NavigationMenu,
     NavigationMenuItem,
     NavigationMenuList,
     navigationMenuTriggerStyle,
-} from '@/components/ui/navigation-menu';
+} from '@/shared/ui/navigation-menu';
 import {
     Sheet,
     SheetContent,
     SheetHeader,
     SheetTitle,
     SheetTrigger,
-} from '@/components/ui/sheet';
+} from '@/shared/ui/sheet';
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { UserMenuContent } from '@/components/user-menu-content';
-import { useCurrentUrl } from '@/hooks/use-current-url';
-import { useInitials } from '@/hooks/use-initials';
-import { cn, toUrl } from '@/lib/utils';
-import { dashboard } from '@/routes';
+} from '@/shared/ui/tooltip';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 type Props = {

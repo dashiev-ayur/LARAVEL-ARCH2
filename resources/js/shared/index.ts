@@ -1,5 +1,12 @@
 /**
  * Слой shared — UI-кит, lib, нейтральные хуки (публичный API через реэкспорты).
- * Заглушка этапа 1; при миграции сюда переносится код из @/components/ui и т.д.
+ * Импорты в приложении предпочтительны как `@/shared/...` / `@/shared/ui/...` — без обязательного barrel.
  */
-export {};
+export { initializeTheme, useAppearance } from './hooks/use-appearance';
+export { useClipboard } from './hooks/use-clipboard';
+export { useCurrentUrl } from './hooks/use-current-url';
+export { useFlashToast } from './hooks/use-flash-toast';
+export { useInitials } from './hooks/use-initials';
+export { useIsMobile } from './hooks/use-mobile';
+export { useMobileNavigation } from './hooks/use-mobile-navigation';
+export { cn, toUrl } from './lib/utils';

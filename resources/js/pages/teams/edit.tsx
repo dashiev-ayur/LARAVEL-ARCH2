@@ -7,26 +7,26 @@ import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import InviteMemberModal from '@/components/invite-member-modal';
 import RemoveMemberModal from '@/components/remove-member-modal';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { edit, index, update } from '@/routes/teams';
+import { update as updateMember } from '@/routes/teams/members';
+import { useInitials } from '@/shared/hooks/use-initials';
+import { Avatar, AvatarFallback, AvatarImage } from '@/shared/ui/avatar';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from '@/shared/ui/dropdown-menu';
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { useInitials } from '@/hooks/use-initials';
-import { edit, index, update } from '@/routes/teams';
-import { update as updateMember } from '@/routes/teams/members';
+} from '@/shared/ui/tooltip';
 import type {
     RoleOption,
     Team,

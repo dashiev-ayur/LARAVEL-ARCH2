@@ -2,7 +2,8 @@ import { Form } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
+import { store } from '@/routes/teams';
+import { Button } from '@/shared/ui/button';
 import {
     Dialog,
     DialogClose,
@@ -12,10 +13,9 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { store } from '@/routes/teams';
+} from '@/shared/ui/dialog';
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
 
 export default function CreateTeamModal({ children }: PropsWithChildren) {
     const [open, setOpen] = useState(false);

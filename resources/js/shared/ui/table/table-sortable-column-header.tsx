@@ -12,6 +12,7 @@ export function TableSortableColumnHeader<TData>({
   children,
 }: TableSortableColumnHeaderProps<TData>) {
   const sorted = column.getIsSorted();
+
   return (
     <button
       type="button"

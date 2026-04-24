@@ -2,15 +2,15 @@ import { Head, Link } from '@inertiajs/react';
 import { Eye, Pencil, Plus } from 'lucide-react';
 import CreateTeamModal from '@/components/create-team-modal';
 import Heading from '@/components/heading';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { edit, index } from '@/routes/teams';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { edit, index } from '@/routes/teams';
+} from '@/shared/ui/tooltip';
 import type { Team } from '@/types';
 
 type Props = {

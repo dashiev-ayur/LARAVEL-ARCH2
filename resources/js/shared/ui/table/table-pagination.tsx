@@ -14,20 +14,25 @@ function getVisiblePageNumbers(
   if (totalPages <= 0) {
     return [];
   }
+
   if (totalPages <= maxButtons) {
     return Array.from({ length: totalPages }, (_, i) => i + 1);
   }
+
   const half = Math.floor(maxButtons / 2);
   const start = Math.max(1, currentPage - half);
   const end = start + maxButtons - 1;
+
   if (end > totalPages) {
     const newEnd = totalPages;
     const newStart = Math.max(1, newEnd - maxButtons + 1);
+
     return Array.from(
       { length: newEnd - newStart + 1 },
       (_, i) => newStart + i,
     );
   }
+
   return Array.from({ length: maxButtons }, (_, i) => start + i);
 }
 
@@ -69,6 +74,7 @@ export function TablePagination<TData>({
         <div className="flex items-center gap-1.5">
           {visiblePages.map((page) => {
             const isActive = page === currentPage;
+
             return (
               <button
                 key={page}

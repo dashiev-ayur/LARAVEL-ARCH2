@@ -4,24 +4,24 @@ import { Check, Copy, ScanLine } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AlertError from '@/components/alert-error';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
+import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
+import { confirm } from '@/routes/two-factor';
+import { useAppearance } from '@/shared/hooks/use-appearance';
+import { useClipboard } from '@/shared/hooks/use-clipboard';
+import { Button } from '@/shared/ui/button';
 import {
     Dialog,
     DialogContent,
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/shared/ui/dialog';
 import {
     InputOTP,
     InputOTPGroup,
     InputOTPSlot,
-} from '@/components/ui/input-otp';
-import { Spinner } from '@/components/ui/spinner';
-import { useAppearance } from '@/hooks/use-appearance';
-import { useClipboard } from '@/hooks/use-clipboard';
-import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
-import { confirm } from '@/routes/two-factor';
+} from '@/shared/ui/input-otp';
+import { Spinner } from '@/shared/ui/spinner';
 
 function GridScanIcon() {
     return (

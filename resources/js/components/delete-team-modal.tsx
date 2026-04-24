@@ -1,7 +1,8 @@
 import { Form } from '@inertiajs/react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
+import { destroy } from '@/routes/teams';
+import { Button } from '@/shared/ui/button';
 import {
     Dialog,
     DialogClose,
@@ -10,10 +11,9 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { destroy } from '@/routes/teams';
+} from '@/shared/ui/dialog';
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
 import type { Team } from '@/types';
 
 type Props = {

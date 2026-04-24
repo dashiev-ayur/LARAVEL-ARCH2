@@ -6,10 +6,10 @@ import {
     useReactTable,
 } from '@tanstack/react-table';
 import { useMemo } from 'react';
-import { Table } from '@/components/table';
-import { ButtonNewPost } from '@/components/ui/button-new-post';
-import { Button } from '@/components/ui/button';
+import { ButtonNewPost } from '@/features/post';
 import { dashboard } from '@/routes';
+import { Button } from '@/shared/ui/button';
+import { Table } from '@/shared/ui/table';
 
 type PostRow = {
     id: number;

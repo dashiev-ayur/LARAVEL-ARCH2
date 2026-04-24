@@ -1,12 +1,12 @@
 import { Link } from '@inertiajs/react';
+import { useCurrentUrl } from '@/shared/hooks/use-current-url';
 import {
     SidebarGroup,
     SidebarGroupLabel,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-} from '@/components/ui/sidebar';
-import { useCurrentUrl } from '@/hooks/use-current-url';
+} from '@/shared/ui/sidebar';
 import type { NavItem } from '@/types';
 
 export function NavMain({ items = [] }: { items: NavItem[] }) {
