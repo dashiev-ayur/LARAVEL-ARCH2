@@ -109,6 +109,14 @@
         "skipLibCheck": true /* Skip type checking all .d.ts files. */,
         "baseUrl": ".",
         "paths": {
+            "@/shared": ["./resources/js/shared"],
+            "@/shared/*": ["./resources/js/shared/*"],
+            "@/entities": ["./resources/js/entities"],
+            "@/entities/*": ["./resources/js/entities/*"],
+            "@/features": ["./resources/js/features"],
+            "@/features/*": ["./resources/js/features/*"],
+            "@/widgets": ["./resources/js/widgets"],
+            "@/widgets/*": ["./resources/js/widgets/*"],
             "@/*": ["./resources/js/*"]
         },
         "jsx": "react-jsx"
