@@ -7,8 +7,8 @@ namespace App\Enums;
  */
 enum PostType: string
 {
-    case Page = 'page';
     case News = 'news';
+    case Page = 'page';
     case Article = 'article';
     case Product = 'product';
 
