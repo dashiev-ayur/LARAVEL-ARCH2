@@ -1,7 +1,7 @@
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import type { PostTypeUiItem } from '../model/types';
-import { ButtonNewPost } from './button-new-post';
+import { CreatePostDialog } from './create-post-dialog';
 import { PostTypeFilter } from './post-type-filter';
 
 type PostsListToolbarProps = {
@@ -52,7 +52,9 @@ export function PostsListToolbar({
                     size="sm"
                     variant={searchVisible ? 'secondary' : 'ghost'}
                     className={`h-8 w-8 shrink-0 px-0 ${!searchVisible && hasActiveSearch ? 'bg-muted text-foreground' : ''}`}
-                    aria-label={searchVisible ? 'Скрыть поиск' : 'Показать поиск'}
+                    aria-label={
+                        searchVisible ? 'Скрыть поиск' : 'Показать поиск'
+                    }
                     onClick={onToggleSearch}
                 >
                     <Search className="size-4" />
@@ -62,14 +64,21 @@ export function PostsListToolbar({
                     size="sm"
                     variant={filtersVisible ? 'secondary' : 'ghost'}
                     className={`h-8 w-8 shrink-0 px-0 ${!filtersVisible && hasActiveColumnFilters ? 'bg-muted text-foreground' : ''}`}
-                    aria-label={filtersVisible ? 'Скрыть фильтры' : 'Показать фильтры'}
+                    aria-label={
+                        filtersVisible ? 'Скрыть фильтры' : 'Показать фильтры'
+                    }
                     onClick={onToggleFilters}
                 >
                     <SlidersHorizontal className="size-4" />
                 </Button>
-                <ButtonNewPost
+                <CreatePostDialog
                     className="shrink-0"
-                    newButtonTitle={postTypeUi[activeType]?.newButtonTitle ?? 'Новая запись'}
+                    currentTeam={currentTeam}
+                    currentOrg={currentOrg}
+                    activeType={activeType}
+                    newButtonTitle={
+                        postTypeUi[activeType]?.newButtonTitle ?? 'Новая запись'
+                    }
                 />
             </div>
         </>

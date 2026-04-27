@@ -303,3 +303,225 @@ test('posts page applies search query', function () {
             ->where('posts.0.title', 'Laravel Searchable Post'),
         );
 });
+
+test('authenticated users can create post with generated slug', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+
+    Post::factory()->create([
+        'org_id' => $org->id,
+        'author_id' => $user->id,
+        'type' => 'news',
+        'title' => 'Brand News',
+        'slug' => 'brand-news',
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('posts.store', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]), [
+            'type' => 'news',
+            'title' => 'Brand News',
+            'status' => 'draft',
+            'excerpt' => 'Short intro',
+            'content' => 'Full content',
+        ])
+        ->assertRedirect(route('posts.byType', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+            'type' => 'news',
+        ]));
+
+    $this->assertDatabaseHas('posts', [
+        'org_id' => $org->id,
+        'author_id' => $user->id,
+        'type' => 'news',
+        'status' => 'draft',
+        'slug' => 'brand-news-2',
+        'title' => 'Brand News',
+        'excerpt' => 'Short intro',
+        'content' => 'Full content',
+    ]);
+});
+
+test('post creation rejects duplicate slug in the same org and type', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+
+    Post::factory()->create([
+        'org_id' => $org->id,
+        'author_id' => $user->id,
+        'type' => 'page',
+        'title' => 'Existing Page',
+        'slug' => 'existing-page',
+    ]);
+
+    $this->actingAs($user)
+        ->from(route('posts.index', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]))
+        ->post(route('posts.store', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]), [
+            'type' => 'page',
+            'title' => 'Another Page',
+            'slug' => 'existing-page',
+            'status' => 'draft',
+        ])
+        ->assertRedirect(route('posts.index', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]))
+        ->assertSessionHasErrors('slug');
+});
+
+test('authenticated users can update post', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+
+    $post = Post::factory()->create([
+        'org_id' => $org->id,
+        'author_id' => $user->id,
+        'type' => 'page',
+        'status' => 'draft',
+        'title' => 'Old Title',
+        'slug' => 'old-title',
+        'excerpt' => 'Old excerpt',
+        'content' => 'Old content',
+    ]);
+
+    $this->actingAs($user)
+        ->patch(route('posts.update', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+            'post' => $post,
+        ]), [
+            'type' => 'news',
+            'title' => 'Updated Title',
+            'slug' => 'updated-title',
+            'status' => 'published',
+            'excerpt' => 'Updated excerpt',
+            'content' => 'Updated content',
+        ])
+        ->assertRedirect(route('posts.byType', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+            'type' => 'news',
+        ]));
+
+    $this->assertDatabaseHas('posts', [
+        'id' => $post->id,
+        'org_id' => $org->id,
+        'author_id' => $user->id,
+        'type' => 'news',
+        'status' => 'published',
+        'slug' => 'updated-title',
+        'title' => 'Updated Title',
+        'excerpt' => 'Updated excerpt',
+        'content' => 'Updated content',
+    ]);
+});
+
+test('post update rejects duplicate slug in the same org and type', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+
+    Post::factory()->create([
+        'org_id' => $org->id,
+        'author_id' => $user->id,
+        'type' => 'page',
+        'title' => 'Existing Page',
+        'slug' => 'existing-page',
+    ]);
+
+    $post = Post::factory()->create([
+        'org_id' => $org->id,
+        'author_id' => $user->id,
+        'type' => 'page',
+        'title' => 'Edited Page',
+        'slug' => 'edited-page',
+    ]);
+
+    $this->actingAs($user)
+        ->from(route('posts.index', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]))
+        ->patch(route('posts.update', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+            'post' => $post,
+        ]), [
+            'type' => 'page',
+            'title' => 'Edited Page',
+            'slug' => 'existing-page',
+            'status' => 'draft',
+        ])
+        ->assertRedirect(route('posts.index', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]))
+        ->assertSessionHasErrors('slug');
+});
+
+test('post creation validates required title', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+
+    $this->actingAs($user)
+        ->from(route('posts.index', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]))
+        ->post(route('posts.store', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]), [
+            'type' => 'page',
+            'title' => '',
+            'status' => 'draft',
+        ])
+        ->assertRedirect(route('posts.index', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]))
+        ->assertSessionHasErrors('title');
+});

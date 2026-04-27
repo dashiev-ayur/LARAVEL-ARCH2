@@ -11,6 +11,7 @@ import type {
     SortingState,
     Updater,
 } from '@tanstack/react-table';
+import { Pencil } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { PostListRow } from '@/entities/post';
@@ -19,13 +20,16 @@ import { byType, index as postsIndex } from '@/routes/posts';
 import { formatDateTime } from '@/shared/lib/format-date-time';
 import { useDebounce } from '@/shared/lib/hooks/use-debounce';
 import { Button } from '@/shared/ui/button';
+import { Checkbox } from '@/shared/ui/checkbox';
 import { Input } from '@/shared/ui/input';
 import {
     Table,
     TablePagination,
     TableSortableColumnHeader,
+    tableColumnVariant,
 } from '@/shared/ui/table';
 import type { PostsListPageProps } from '../model/types';
+import { CreatePostDialog } from './create-post-dialog';
 import { PostsListToolbar } from './posts-list-toolbar';
 
 const columnHelper = createColumnHelper<PostListRow>();
@@ -56,6 +60,16 @@ export function PostsListTable({
 }: Props) {
     const columns = useMemo(
         () => [
+            columnHelper.display({
+                id: 'select',
+                header: () => <span className="sr-only">Выбор</span>,
+                cell: ({ row }) => (
+                    <Checkbox
+                        aria-label={`Выбрать запись ${row.original.title}`}
+                    />
+                ),
+                enableSorting: false,
+            }),
             columnHelper.accessor('title', {
                 header: ({ column }) => (
                     <TableSortableColumnHeader column={column}>
@@ -93,8 +107,42 @@ export function PostsListTable({
                 ),
                 cell: ({ getValue }) => formatDateTime(getValue()),
             }),
+            columnHelper.display({
+                id: 'actions',
+                header: () => <span className="sr-only">Действия</span>,
+                cell: ({ row }) =>
+                    currentTeam && currentOrg ? (
+                        <CreatePostDialog
+                            currentTeam={currentTeam}
+                            currentOrg={currentOrg}
+                            activeType={row.original.type}
+                            post={row.original}
+                            trigger={
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label={`Редактировать запись ${row.original.title}`}
+                                >
+                                    <Pencil className="h-4 w-4" />
+                                </Button>
+                            }
+                        />
+                    ) : (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Редактировать запись ${row.original.title}`}
+                            disabled
+                        >
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                    ),
+                enableSorting: false,
+            }),
         ],
-        [],
+        [currentOrg, currentTeam],
     );
 
     const pagination = useMemo<PaginationState>(
@@ -536,7 +584,12 @@ export function PostsListTable({
                         {table.getHeaderGroups().map((headerGroup) => (
                             <Table.Row key={headerGroup.id} header>
                                 {headerGroup.headers.map((header) => (
-                                    <Table.Head key={header.id}>
+                                    <Table.Head
+                                        key={header.id}
+                                        variant={tableColumnVariant(
+                                            header.column.id,
+                                        )}
+                                    >
                                         {header.isPlaceholder
                                             ? null
                                             : flexRender(
@@ -554,7 +607,12 @@ export function PostsListTable({
                             table.getRowModel().rows.map((row) => (
                                 <Table.Row key={row.id}>
                                     {row.getVisibleCells().map((cell) => (
-                                        <Table.Cell key={cell.id}>
+                                        <Table.Cell
+                                            key={cell.id}
+                                            variant={tableColumnVariant(
+                                                cell.column.id,
+                                            )}
+                                        >
                                             {flexRender(
                                                 cell.column.columnDef.cell,
                                                 cell.getContext(),

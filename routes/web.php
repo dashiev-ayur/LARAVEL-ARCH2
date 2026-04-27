@@ -16,6 +16,8 @@ Route::prefix('{current_team}')
     ->group(function () {
         Route::inertia('dashboard', 'dashboard')->name('dashboard');
         Route::get('{current_org}/posts', [PostController::class, 'index'])->name('posts.index');
+        Route::post('{current_org}/posts', [PostController::class, 'store'])->name('posts.store');
+        Route::patch('{current_org}/posts/{post}', [PostController::class, 'update'])->name('posts.update');
         Route::get('{current_org}/posts/{type}', [PostController::class, 'index'])
             ->whereIn('type', PostType::values())
             ->name('posts.byType');
