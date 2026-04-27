@@ -4,6 +4,8 @@ type TablePaginationProps<TData> = {
   table: Table<TData>;
   /** Для серверной пагинации: всего записей с бэкенда (иначе берётся длина текущей страницы) */
   totalRowCount?: number;
+  pageSizeOptions?: readonly number[];
+  onPageSizeChange?: (pageSize: number) => void;
 };
 
 function getVisiblePageNumbers(
@@ -39,6 +41,8 @@ function getVisiblePageNumbers(
 export function TablePagination<TData>({
   table,
   totalRowCount,
+  pageSizeOptions = [10, 25, 50],
+  onPageSizeChange,
 }: TablePaginationProps<TData>) {
   const totalRows =
     totalRowCount ?? table.getPrePaginationRowModel().rows.length;
@@ -59,7 +63,33 @@ export function TablePagination<TData>({
         из{" "}
         <span className="font-medium text-gray-600">{totalRows}</span>
       </p>
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-3">
+        <label className="flex items-center gap-2 text-xs text-gray-500">
+          На странице
+          <select
+            aria-label="Количество записей на странице"
+            value={pageSize}
+            onChange={(event) => {
+              const nextPageSize = Number(event.target.value);
+
+              if (onPageSizeChange) {
+                onPageSizeChange(nextPageSize);
+
+                return;
+              }
+
+              table.setPageSize(nextPageSize);
+            }}
+            className="h-8 rounded-md border border-gray-200 bg-white px-2 text-sm text-gray-700 outline-none transition-colors focus:border-gray-300"
+          >
+            {pageSizeOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex items-center gap-1.5">
         <button
           type="button"
           aria-label="Предыдущая страница"
@@ -104,6 +134,7 @@ export function TablePagination<TData>({
             ›
           </span>
         </button>
+        </div>
       </div>
     </div>
   );

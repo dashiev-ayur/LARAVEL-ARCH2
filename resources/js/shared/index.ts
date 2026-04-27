@@ -9,4 +9,5 @@ export { useFlashToast } from './hooks/use-flash-toast';
 export { useInitials } from './hooks/use-initials';
 export { useIsMobile } from './hooks/use-mobile';
 export { useMobileNavigation } from './hooks/use-mobile-navigation';
+export { formatDate, formatDateTime } from './lib/format-date-time';
 export { cn, toUrl } from './lib/utils';

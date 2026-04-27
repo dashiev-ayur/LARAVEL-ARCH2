@@ -8,6 +8,7 @@ export function buildPostTypeFilterHref(
     currentTeam: { slug: string } | null,
     currentOrg: { slug: string } | null,
     type: string,
+    query?: Record<string, string | number | boolean | undefined>,
 ): string {
     if (!currentTeam || !currentOrg) {
         return '/posts';
@@ -17,5 +18,5 @@ export function buildPostTypeFilterHref(
         current_team: currentTeam.slug,
         current_org: currentOrg.slug,
         type,
-    });
+    }, query ? { query } : undefined);
 }

@@ -8,6 +8,26 @@ export type PostTypeUiItem = {
     newButtonTitle: string;
 };
 
+export type PostsPagination = {
+    currentPage: number;
+    lastPage: number;
+    perPage: number;
+    total: number;
+};
+
+export type PostsListFilters = {
+    search: string;
+    title: string;
+    status: string;
+    publishedAt: string;
+    updatedAt: string;
+};
+
+export type PostsListSorting = {
+    sortBy: 'title' | 'status' | 'published_at' | 'updated_at' | 'id';
+    sortDirection: 'asc' | 'desc';
+};
+
 /**
  * Пропы Inertia для страницы списка записей (согласованы с `PostController@index`).
  */
@@ -20,4 +40,7 @@ export type PostsListPageProps = {
     /** Порядок и набор кодов с бэка (`PostType::values()`). */
     postTypes: readonly string[];
     posts: PostListRow[];
+    postsPagination: PostsPagination;
+    postsFilters: PostsListFilters;
+    postsSorting: PostsListSorting;
 };

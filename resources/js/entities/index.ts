@@ -4,7 +4,7 @@
  */
 export type { Org, OrgEntity } from './org';
 export type { PostListRow } from './post';
-export { PostStatusCell, PostTitleSlugCell } from './post';
+export { PostStatusCell, PostTitleExcerptCell } from './post';
 export type {
     RoleOption,
     Team,

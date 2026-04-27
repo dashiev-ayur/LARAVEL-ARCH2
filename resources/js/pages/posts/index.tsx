@@ -12,6 +12,9 @@ export default function PostsIndex() {
         postTypeUi,
         postTypes,
         posts,
+        postsPagination,
+        postsFilters,
+        postsSorting,
     } = props;
 
     return (
@@ -32,6 +35,9 @@ export default function PostsIndex() {
                     currentOrg={currentOrg}
                     postTypes={postTypes}
                     postTypeUi={postTypeUi}
+                    postsPagination={postsPagination}
+                    postsFilters={postsFilters}
+                    postsSorting={postsSorting}
                 />
             </div>
         </>

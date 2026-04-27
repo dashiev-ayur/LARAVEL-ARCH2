@@ -10,6 +10,7 @@ type PostTypeFilterProps = {
     activeType: string;
     postTypes: readonly string[];
     postTypeUi: Record<string, PostTypeUiItem>;
+    query?: Record<string, string | number | boolean | undefined>;
 };
 
 /**
@@ -21,13 +22,14 @@ export function PostTypeFilter({
     activeType,
     postTypes,
     postTypeUi,
+    query,
 }: PostTypeFilterProps) {
     return (
         <div className="flex min-w-0 flex-wrap items-center gap-2">
             {postTypes.map((type) => {
                 const isActive = type === activeType;
                 const label = postTypeUi[type]?.filterButtonTitle ?? type;
-                const href = buildPostTypeFilterHref(currentTeam, currentOrg, type);
+                const href = buildPostTypeFilterHref(currentTeam, currentOrg, type, query);
 
                 return (
                     <Button key={type} variant={isActive ? 'default' : 'outline'} size="sm" asChild>

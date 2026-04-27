@@ -7,6 +7,7 @@ export interface PostListRow {
     status: string;
     slug: string;
     title: string;
+    excerpt: string | null;
     published_at: string | null;
     updated_at: string | null;
 }
