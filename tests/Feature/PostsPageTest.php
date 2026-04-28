@@ -495,6 +495,76 @@ test('post update rejects duplicate slug in the same org and type', function () 
         ->assertSessionHasErrors('slug');
 });
 
+test('authenticated users can delete draft post', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+
+    $post = Post::factory()->create([
+        'org_id' => $org->id,
+        'author_id' => $user->id,
+        'type' => 'page',
+        'status' => 'draft',
+        'title' => 'Draft Page',
+        'slug' => 'draft-page',
+    ]);
+
+    $this->actingAs($user)
+        ->delete(route('posts.destroy', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+            'post' => $post,
+        ]))
+        ->assertRedirect(route('posts.byType', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+            'type' => 'page',
+        ]));
+
+    $this->assertSoftDeleted('posts', [
+        'id' => $post->id,
+    ]);
+});
+
+test('post deletion rejects non draft post', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+
+    $post = Post::factory()->create([
+        'org_id' => $org->id,
+        'author_id' => $user->id,
+        'type' => 'page',
+        'status' => 'published',
+        'title' => 'Published Page',
+        'slug' => 'published-page',
+    ]);
+
+    $this->actingAs($user)
+        ->delete(route('posts.destroy', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+            'post' => $post,
+        ]))
+        ->assertForbidden();
+
+    $this->assertNotSoftDeleted('posts', [
+        'id' => $post->id,
+    ]);
+});
+
 test('post creation validates required title', function () {
     /** @var TestCase $this */
     $user = User::factory()->create();

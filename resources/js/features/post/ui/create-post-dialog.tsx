@@ -1,9 +1,14 @@
-import { Form } from '@inertiajs/react';
+import { Form, router } from '@inertiajs/react';
+import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import InputError from '@/components/input-error';
 import type { PostListRow } from '@/entities/post';
-import { store as storePost, update as updatePost } from '@/routes/posts';
+import {
+    destroy as destroyPost,
+    store as storePost,
+    update as updatePost,
+} from '@/routes/posts';
 import { Button } from '@/shared/ui/button';
 import {
     Dialog,
@@ -61,7 +66,9 @@ export function CreatePostDialog({
     const initialStatus = post?.status ?? 'draft';
     const [open, setOpen] = useState(false);
     const [status, setStatus] = useState(initialStatus);
+    const [deleting, setDeleting] = useState(false);
     const isDisabled = !currentTeam || !currentOrg;
+    const canDelete = isEditing && post?.status === 'draft';
 
     const handleOpenChange = (nextOpen: boolean) => {
         setOpen(nextOpen);
@@ -82,6 +89,26 @@ export function CreatePostDialog({
                   current_team: currentTeam?.slug ?? '',
                   current_org: currentOrg?.slug ?? '',
               });
+
+    const handleDelete = () => {
+        if (!currentTeam || !currentOrg || !post || !canDelete) {
+            return;
+        }
+
+        router.delete(
+            destroyPost.url({
+                current_team: currentTeam.slug,
+                current_org: currentOrg.slug,
+                post: post.id,
+            }),
+            {
+                preserveScroll: true,
+                onStart: () => setDeleting(true),
+                onFinish: () => setDeleting(false),
+                onSuccess: () => handleOpenChange(false),
+            },
+        );
+    };
 
     if (isDisabled) {
         return (
@@ -244,20 +271,48 @@ export function CreatePostDialog({
                                 </div>
                             </div>
 
-                            <DialogFooter className="gap-2">
-                                <DialogClose asChild>
-                                    <Button type="button" variant="secondary">
-                                        Отмена
+                            <DialogFooter className="gap-2 sm:justify-between">
+                                {isEditing ? (
+                                    <Button
+                                        type="button"
+                                        variant="destructive"
+                                        disabled={
+                                            !canDelete || processing || deleting
+                                        }
+                                        title={
+                                            canDelete
+                                                ? 'Удалить черновик'
+                                                : 'Удалять можно только черновики'
+                                        }
+                                        onClick={handleDelete}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                        {deleting ? 'Удаление...' : 'Удалить'}
                                     </Button>
-                                </DialogClose>
+                                ) : (
+                                    <span />
+                                )}
 
-                                <Button
-                                    type="submit"
-                                    data-test="create-post-submit"
-                                    disabled={processing}
-                                >
-                                    {processing ? processingTitle : submitTitle}
-                                </Button>
+                                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                                    <DialogClose asChild>
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                        >
+                                            Отмена
+                                        </Button>
+                                    </DialogClose>
+
+                                    <Button
+                                        type="submit"
+                                        data-test="create-post-submit"
+                                        disabled={processing || deleting}
+                                    >
+                                        {processing
+                                            ? processingTitle
+                                            : submitTitle}
+                                    </Button>
+                                </div>
                             </DialogFooter>
                         </>
                     )}

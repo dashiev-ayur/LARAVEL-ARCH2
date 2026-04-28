@@ -18,6 +18,7 @@ Route::prefix('{current_team}')
         Route::get('{current_org}/posts', [PostController::class, 'index'])->name('posts.index');
         Route::post('{current_org}/posts', [PostController::class, 'store'])->name('posts.store');
         Route::patch('{current_org}/posts/{post}', [PostController::class, 'update'])->name('posts.update');
+        Route::delete('{current_org}/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
         Route::get('{current_org}/posts/{type}', [PostController::class, 'index'])
             ->whereIn('type', PostType::values())
             ->name('posts.byType');

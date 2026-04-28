@@ -101,6 +101,31 @@ class PostController extends Controller
     }
 
     /**
+     * Удалить черновик текущей организации.
+     */
+    public function destroy(
+        Request $request,
+        string $current_team,
+        string $current_org,
+        Post $post,
+    ): RedirectResponse {
+        $org = $this->resolveCurrentOrg($request, $current_org);
+        abort_unless((int) $post->org_id === (int) $org->id, 404);
+        abort_unless($post->status === 'draft', 403);
+
+        $type = $post->type instanceof PostType ? $post->type->value : (string) $post->type;
+        $post->delete();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Post deleted.')]);
+
+        return to_route('posts.byType', [
+            'current_team' => $current_team,
+            'current_org' => $org->slug,
+            'type' => $type,
+        ]);
+    }
+
+    /**
      * Показать страницу управления записями.
      */
     public function index(
