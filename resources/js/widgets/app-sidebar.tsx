@@ -1,5 +1,12 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, FileText, FolderGit2, Info, LayoutGrid } from 'lucide-react';
+import {
+    BookOpen,
+    FileText,
+    FolderGit2,
+    FolderTree,
+    Info,
+    LayoutGrid,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -7,6 +14,7 @@ import { NavUser } from '@/components/nav-user';
 import { OrgSwitcher } from '@/components/org-switcher';
 import { TeamSwitcher } from '@/components/team-switcher';
 import { dashboard } from '@/routes';
+import { index as categoriesIndex } from '@/routes/categories';
 import { index as postsIndex } from '@/routes/posts';
 import {
     Sidebar,
@@ -31,6 +39,13 @@ export function AppSidebar() {
                   current_org: currentOrg.slug,
               })
             : dashboardUrl;
+    const categoriesUrl =
+        currentTeam && currentOrg
+            ? categoriesIndex.url({
+                  current_team: currentTeam.slug,
+                  current_org: currentOrg.slug,
+              })
+            : dashboardUrl;
 
     const mainNavItems: NavItem[] = [
         {
@@ -47,6 +62,12 @@ export function AppSidebar() {
             title: 'Записи',
             href: postsUrl,
             icon: FileText,
+            disabled: !currentOrg,
+        },
+        {
+            title: 'Категории',
+            href: categoriesUrl,
+            icon: FolderTree,
             disabled: !currentOrg,
         },
     ];
