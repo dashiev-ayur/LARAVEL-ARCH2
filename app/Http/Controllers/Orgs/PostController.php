@@ -95,7 +95,7 @@ class PostController extends Controller
         $title = (string) $validated['title'];
         $slug = trim((string) ($validated['slug'] ?? ''));
 
-        Post::query()->create([
+        $post = Post::query()->create([
             'org_id' => $org->id,
             'author_id' => $request->user()->id,
             'type' => $type,
@@ -107,12 +107,12 @@ class PostController extends Controller
             'published_at' => $validated['published_at'] ?? null,
         ]);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Post created.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Запись успешно сохранена.']);
 
-        return to_route('posts.byType', [
+        return to_route('posts.edit', [
             'current_team' => $current_team,
             'current_org' => $org->slug,
-            'type' => $type,
+            'post' => $post,
             ...$this->postsListQueryToRouteParameters($request),
         ]);
     }
@@ -144,12 +144,12 @@ class PostController extends Controller
             'published_at' => $validated['published_at'] ?? null,
         ]);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Post updated.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Запись успешно сохранена.']);
 
-        return to_route('posts.byType', [
+        return to_route('posts.edit', [
             'current_team' => $current_team,
             'current_org' => $org->slug,
-            'type' => $type,
+            'post' => $post,
             ...$this->postsListQueryToRouteParameters($request),
         ]);
     }

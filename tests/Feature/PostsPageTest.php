@@ -664,7 +664,7 @@ test('authenticated users can create post with generated slug', function () {
         'slug' => 'brand-news',
     ]);
 
-    $this->actingAs($user)
+    $response = $this->actingAs($user)
         ->post(route('posts.store', [
             'current_team' => $team->slug,
             'current_org' => $org->slug,
@@ -680,18 +680,7 @@ test('authenticated users can create post with generated slug', function () {
             'status' => 'draft',
             'excerpt' => 'Short intro',
             'content' => 'Full content',
-        ])
-        ->assertRedirect(route('posts.byType', [
-            'current_team' => $team->slug,
-            'current_org' => $org->slug,
-            'type' => 'news',
-            'page' => 2,
-            'per_page' => 25,
-            'search' => 'brand',
-            'filter_status' => 'draft',
-            'sort_by' => 'title',
-            'sort_direction' => 'asc',
-        ]));
+        ]);
 
     $this->assertDatabaseHas('posts', [
         'org_id' => $org->id,
@@ -703,6 +692,23 @@ test('authenticated users can create post with generated slug', function () {
         'excerpt' => 'Short intro',
         'content' => 'Full content',
     ]);
+
+    $createdPost = Post::query()
+        ->where('org_id', $org->id)
+        ->where('slug', 'brand-news-2')
+        ->firstOrFail();
+
+    $response->assertRedirect(route('posts.edit', [
+        'current_team' => $team->slug,
+        'current_org' => $org->slug,
+        'post' => $createdPost,
+        'page' => 2,
+        'per_page' => 25,
+        'search' => 'brand',
+        'filter_status' => 'draft',
+        'sort_by' => 'title',
+        'sort_direction' => 'asc',
+    ]));
 });
 
 test('post creation rejects duplicate slug in the same org and type', function () {
@@ -785,10 +791,10 @@ test('authenticated users can update post', function () {
             'excerpt' => 'Updated excerpt',
             'content' => 'Updated content',
         ])
-        ->assertRedirect(route('posts.byType', [
+        ->assertRedirect(route('posts.edit', [
             'current_team' => $team->slug,
             'current_org' => $org->slug,
-            'type' => 'news',
+            'post' => $post,
             'page' => 4,
             'per_page' => 10,
             'filter_title' => 'Old',
