@@ -44,3 +44,15 @@ export type PostsListPageProps = {
     postsFilters: PostsListFilters;
     postsSorting: PostsListSorting;
 };
+
+/**
+ * Пропы Inertia для страницы редактирования записи.
+ */
+export type PostEditPageProps = {
+    currentTeam: { slug: string } | null;
+    currentOrg: { slug: string } | null;
+    activeType: string;
+    postTypeUi: Record<string, PostTypeUiItem>;
+    postTypes: readonly string[];
+    post: PostListRow;
+};

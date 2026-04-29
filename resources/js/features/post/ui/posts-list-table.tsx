@@ -1,4 +1,4 @@
-import { router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import {
     createColumnHelper,
     flexRender,
@@ -16,7 +16,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { PostListRow } from '@/entities/post';
 import { PostStatusCell, PostTitleExcerptCell } from '@/entities/post';
-import { byType, index as postsIndex } from '@/routes/posts';
+import { byType, edit as editPost, index as postsIndex } from '@/routes/posts';
 import { formatDateTime } from '@/shared/lib/format-date-time';
 import { useDebounce } from '@/shared/lib/hooks/use-debounce';
 import { Button } from '@/shared/ui/button';
@@ -29,7 +29,6 @@ import {
     tableColumnVariant,
 } from '@/shared/ui/table';
 import type { PostsListPageProps } from '../model/types';
-import { CreatePostDialog } from './create-post-dialog';
 import { PostsListToolbar } from './posts-list-toolbar';
 
 const columnHelper = createColumnHelper<PostListRow>();
@@ -112,22 +111,18 @@ export function PostsListTable({
                 header: () => <span className="sr-only">Действия</span>,
                 cell: ({ row }) =>
                     currentTeam && currentOrg ? (
-                        <CreatePostDialog
-                            currentTeam={currentTeam}
-                            currentOrg={currentOrg}
-                            activeType={row.original.type}
-                            post={row.original}
-                            trigger={
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    aria-label={`Редактировать запись ${row.original.title}`}
-                                >
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
-                            }
-                        />
+                        <Button variant="ghost" size="icon" asChild>
+                            <Link
+                                href={editPost.url({
+                                    current_team: currentTeam.slug,
+                                    current_org: currentOrg.slug,
+                                    post: row.original.id,
+                                })}
+                                aria-label={`Редактировать запись ${row.original.title}`}
+                            >
+                                <Pencil className="h-4 w-4" />
+                            </Link>
+                        </Button>
                     ) : (
                         <Button
                             type="button"

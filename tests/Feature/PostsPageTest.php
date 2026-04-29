@@ -44,7 +44,110 @@ test('authenticated users can open posts page', function () {
     $response->assertOk();
 });
 
+test('guests are redirected to login from post edit page', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $post = Post::factory()->create([
+        'org_id' => $org->id,
+        'author_id' => $user->id,
+        'type' => 'news',
+        'title' => 'Editable News',
+        'slug' => 'editable-news',
+    ]);
+
+    $response = $this->get(route('posts.edit', [
+        'current_team' => $team->slug,
+        'current_org' => $org->slug,
+        'post' => $post,
+    ]));
+
+    $response->assertRedirect(route('login'));
+});
+
+test('authenticated users can open post edit page', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+    $post = Post::factory()->create([
+        'org_id' => $org->id,
+        'author_id' => $user->id,
+        'type' => 'news',
+        'status' => 'draft',
+        'title' => 'Editable News',
+        'slug' => 'editable-news',
+        'excerpt' => 'Editable excerpt',
+        'content' => 'Editable content',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('posts.edit', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+            'post' => $post,
+        ]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('posts/edit')
+            ->where('activeType', 'news')
+            ->where('postTypeUi.news.filterButtonTitle', 'Новости')
+            ->where('postTypeUi.news.newButtonTitle', 'Новая новость')
+            ->has('postTypes', 4)
+            ->where('post.id', $post->id)
+            ->where('post.type', 'news')
+            ->where('post.status', 'draft')
+            ->where('post.title', 'Editable News')
+            ->where('post.slug', 'editable-news')
+            ->where('post.excerpt', 'Editable excerpt')
+            ->where('post.content', 'Editable content'),
+        );
+});
+
+test('post edit page rejects post from another org', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $otherOrg = $team->orgs()->create([
+        'name' => 'Other Org',
+        'slug' => 'other-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $otherOrg->id]);
+    $post = Post::factory()->create([
+        'org_id' => $org->id,
+        'author_id' => $user->id,
+        'type' => 'news',
+        'title' => 'Other Org News',
+        'slug' => 'other-org-news',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('posts.edit', [
+            'current_team' => $team->slug,
+            'current_org' => $otherOrg->slug,
+            'post' => $post,
+        ]))
+        ->assertNotFound();
+});
+
 test('posts page filters records by type from url', function () {
+    /** @var TestCase $this */
     $user = User::factory()->create();
     $team = $user->currentTeam;
     $org = $team->orgs()->create([
@@ -91,6 +194,7 @@ test('posts page filters records by type from url', function () {
 });
 
 test('posts page defaults to page type when type is omitted', function () {
+    /** @var TestCase $this */
     $user = User::factory()->create();
     $team = $user->currentTeam;
     $org = $team->orgs()->create([
@@ -138,6 +242,7 @@ test('posts page defaults to page type when type is omitted', function () {
 });
 
 test('posts page uses page query for server pagination', function () {
+    /** @var TestCase $this */
     $user = User::factory()->create();
     $team = $user->currentTeam;
     $org = $team->orgs()->create([
@@ -178,6 +283,7 @@ test('posts page uses page query for server pagination', function () {
 });
 
 test('posts page applies per_page and column filters from query', function () {
+    /** @var TestCase $this */
     $user = User::factory()->create();
     $team = $user->currentTeam;
     $org = $team->orgs()->create([
@@ -224,6 +330,7 @@ test('posts page applies per_page and column filters from query', function () {
 });
 
 test('posts page applies sorting from query', function () {
+    /** @var TestCase $this */
     $user = User::factory()->create();
     $team = $user->currentTeam;
     $org = $team->orgs()->create([
@@ -266,6 +373,7 @@ test('posts page applies sorting from query', function () {
 });
 
 test('posts page applies search query', function () {
+    /** @var TestCase $this */
     $user = User::factory()->create();
     $team = $user->currentTeam;
     $org = $team->orgs()->create([

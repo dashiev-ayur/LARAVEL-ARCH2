@@ -30,6 +30,27 @@ class PostController extends Controller
     private const ALLOWED_SORT_DIRECTIONS = ['asc', 'desc'];
 
     /**
+     * Показать страницу редактирования записи текущей организации.
+     */
+    public function edit(
+        Request $request,
+        PostTypeHandlerFactory $postTypeHandlerFactory,
+        string $current_team,
+        string $current_org,
+        Post $post,
+    ): Response {
+        $org = $this->resolveCurrentOrg($request, $current_org);
+        abort_unless((int) $post->org_id === (int) $org->id, 404);
+
+        return Inertia::render('posts/edit', [
+            'activeType' => $post->type instanceof PostType ? $post->type->value : (string) $post->type,
+            'post' => $this->postToInertiaArray($post),
+            'postTypeUi' => $this->postTypeUiToInertiaArray($postTypeHandlerFactory),
+            'postTypes' => PostType::values(),
+        ]);
+    }
+
+    /**
      * Сохранить новую запись текущей организации.
      */
     public function store(
@@ -187,28 +208,9 @@ class PostController extends Controller
             ->orderByDesc('id')
             ->paginate($perPage, ['id', 'type', 'status', 'slug', 'title', 'excerpt', 'content', 'published_at', 'updated_at'])
             ->withQueryString()
-            ->through(fn ($post) => [
-                'id' => $post->id,
-                'type' => $post->type,
-                'status' => $post->status,
-                'slug' => $post->slug,
-                'title' => $post->title,
-                'excerpt' => $post->excerpt,
-                'content' => $post->content,
-                'published_at' => $post->published_at?->toISOString(),
-                'updated_at' => $post->updated_at?->toISOString(),
-            ]);
+            ->through(fn ($post) => $this->postToInertiaArray($post));
 
-        $postTypeUi = collect(PostType::cases())
-            ->mapWithKeys(function (PostType $postType) use ($postTypeHandlerFactory) {
-                return [
-                    $postType->value => $postTypeHandlerFactory
-                        ->make($postType)
-                        ->toData()
-                        ->toInertiaArray(),
-                ];
-            })
-            ->all();
+        $postTypeUi = $this->postTypeUiToInertiaArray($postTypeHandlerFactory);
 
         return Inertia::render('posts/index', [
             'activeType' => $activeType,
@@ -279,5 +281,40 @@ class PostController extends Controller
         }
 
         return preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1;
+    }
+
+    /**
+     * @return array{id: int, type: string, status: string, slug: string, title: string, excerpt: string|null, content: string|null, published_at: string|null, updated_at: string|null}
+     */
+    private function postToInertiaArray(Post $post): array
+    {
+        return [
+            'id' => $post->id,
+            'type' => $post->type instanceof PostType ? $post->type->value : (string) $post->type,
+            'status' => $post->status,
+            'slug' => $post->slug,
+            'title' => $post->title,
+            'excerpt' => $post->excerpt,
+            'content' => $post->content,
+            'published_at' => $post->published_at?->toISOString(),
+            'updated_at' => $post->updated_at?->toISOString(),
+        ];
+    }
+
+    /**
+     * @return array<string, array<string, string>>
+     */
+    private function postTypeUiToInertiaArray(PostTypeHandlerFactory $postTypeHandlerFactory): array
+    {
+        return collect(PostType::cases())
+            ->mapWithKeys(function (PostType $postType) use ($postTypeHandlerFactory) {
+                return [
+                    $postType->value => $postTypeHandlerFactory
+                        ->make($postType)
+                        ->toData()
+                        ->toInertiaArray(),
+                ];
+            })
+            ->all();
     }
 }
