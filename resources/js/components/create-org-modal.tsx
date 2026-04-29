@@ -1,8 +1,8 @@
 import { Form } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
 import { useState } from 'react';
+import OrgController from '@/actions/App/Http/Controllers/Orgs/OrgController';
 import InputError from '@/components/input-error';
-import { store } from '@/routes/teams';
 import { Button } from '@/shared/ui/button';
 import {
     Dialog,
@@ -17,7 +17,7 @@ import {
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 
-export default function CreateTeamModal({ children }: PropsWithChildren) {
+export default function CreateOrgModal({ children }: PropsWithChildren) {
     const [open, setOpen] = useState(false);
 
     return (
@@ -26,7 +26,7 @@ export default function CreateTeamModal({ children }: PropsWithChildren) {
             <DialogContent>
                 <Form
                     key={String(open)}
-                    {...store.form()}
+                    {...OrgController.store.form()}
                     className="space-y-6"
                     onSuccess={() => setOpen(false)}
                 >
@@ -34,20 +34,22 @@ export default function CreateTeamModal({ children }: PropsWithChildren) {
                         <>
                             <DialogHeader>
                                 <DialogTitle>
-                                    Создать новую команду
+                                    Создать новую организацию
                                 </DialogTitle>
                                 <DialogDescription>
-                                    Создайте команду для совместной работы.
+                                    Создайте организацию в текущей команде.
                                 </DialogDescription>
                             </DialogHeader>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Название команды</Label>
+                                <Label htmlFor="org-name">
+                                    Название организации
+                                </Label>
                                 <Input
-                                    id="name"
+                                    id="org-name"
                                     name="name"
-                                    data-test="create-team-name"
-                                    placeholder="Моя команда"
+                                    data-test="create-org-name"
+                                    placeholder="Моя организация"
                                     required
                                 />
                                 <InputError message={errors.name} />
@@ -60,10 +62,10 @@ export default function CreateTeamModal({ children }: PropsWithChildren) {
 
                                 <Button
                                     type="submit"
-                                    data-test="create-team-submit"
+                                    data-test="create-org-submit"
                                     disabled={processing}
                                 >
-                                    Создать команду
+                                    Создать организацию
                                 </Button>
                             </DialogFooter>
                         </>

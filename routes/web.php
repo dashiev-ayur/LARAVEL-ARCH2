@@ -16,6 +16,7 @@ Route::prefix('{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
     ->group(function () {
         Route::inertia('dashboard', 'dashboard')->name('dashboard');
+        Route::inertia('{current_org}/pages', 'pages/index')->name('pages.index');
         Route::get('{current_org}/categories', [CategoryController::class, 'index'])->name('categories.index');
         Route::post('{current_org}/categories', [CategoryController::class, 'store'])->name('categories.store');
         Route::patch('{current_org}/categories/reorder', [CategoryController::class, 'reorder'])->name('categories.reorder');

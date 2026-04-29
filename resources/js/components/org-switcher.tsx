@@ -1,5 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
-import { Building2, Check, ChevronsUpDown } from 'lucide-react';
+import { Building2, Check, ChevronsUpDown, Plus } from 'lucide-react';
+import CreateOrgModal from '@/components/create-org-modal';
 import type { OrgEntity } from '@/entities/org';
 import { switchMethod } from '@/routes/orgs';
 import { useIsMobile } from '@/shared/hooks/use-mobile';
@@ -9,6 +10,7 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/shared/ui/dropdown-menu';
 
@@ -19,6 +21,7 @@ type OrgSwitcherProps = {
 export function OrgSwitcher({ inHeader = false }: OrgSwitcherProps) {
     const page = usePage();
     const isMobile = useIsMobile();
+    const currentTeam = page.props.currentTeam;
     const currentOrg = page.props.currentOrg;
     const orgs = page.props.orgs ?? [];
 
@@ -116,6 +119,34 @@ export function OrgSwitcher({ inHeader = false }: OrgSwitcherProps) {
                         )}
                     </DropdownMenuItem>
                 ))}
+                <DropdownMenuSeparator />
+                {currentTeam ? (
+                    <CreateOrgModal>
+                        <DropdownMenuItem
+                            data-test="org-switcher-new-org"
+                            className={
+                                inHeader
+                                    ? 'cursor-pointer gap-2'
+                                    : 'cursor-pointer gap-2 p-2'
+                            }
+                            onSelect={(event) => event.preventDefault()}
+                        >
+                            <Plus
+                                className={inHeader ? 'size-4' : 'h-4 w-4'}
+                            />
+                            <span className="text-muted-foreground">
+                                New organization
+                            </span>
+                        </DropdownMenuItem>
+                    </CreateOrgModal>
+                ) : (
+                    <DropdownMenuItem disabled>
+                        <Plus className={inHeader ? 'size-4' : 'h-4 w-4'} />
+                        <span className="text-muted-foreground">
+                            New organization
+                        </span>
+                    </DropdownMenuItem>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
     );

@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     BookOpen,
     FileText,
+    Files,
     FolderGit2,
     FolderTree,
     Info,
@@ -15,6 +16,7 @@ import { OrgSwitcher } from '@/components/org-switcher';
 import { TeamSwitcher } from '@/components/team-switcher';
 import { dashboard } from '@/routes';
 import { index as categoriesIndex } from '@/routes/categories';
+import { index as pagesIndex } from '@/routes/pages';
 import { index as postsIndex } from '@/routes/posts';
 import {
     Sidebar,
@@ -39,6 +41,13 @@ export function AppSidebar() {
                   current_org: currentOrg.slug,
               })
             : dashboardUrl;
+    const pagesUrl =
+        currentTeam && currentOrg
+            ? pagesIndex.url({
+                  current_team: currentTeam.slug,
+                  current_org: currentOrg.slug,
+              })
+            : dashboardUrl;
     const categoriesUrl =
         currentTeam && currentOrg
             ? categoriesIndex.url({
@@ -57,6 +66,12 @@ export function AppSidebar() {
             title: 'Главная',
             href: dashboardUrl,
             icon: LayoutGrid,
+        },
+        {
+            title: 'Страницы',
+            href: pagesUrl,
+            icon: Files,
+            disabled: !currentOrg,
         },
         {
             title: 'Записи',

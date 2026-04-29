@@ -23,6 +23,7 @@ final class OrgWriteService implements OrgWritePort
         $slug = $validated['slug'] ?? $this->slugs->uniqueFromName($name);
 
         return Org::create([
+            'team_id' => $validated['team_id'] ?? null,
             'name' => $name,
             'slug' => $slug,
             'about' => $validated['about'] ?? null,

@@ -317,6 +317,25 @@ test('users can switch current organization within current team', function () {
     expect($user->fresh()->current_org_id)->toEqual($secondOrg->id);
 });
 
+test('users can create organization in current team', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $response = $this
+        ->actingAs($user)
+        ->post(route('settings.orgs.store'), [
+            'name' => 'Acme Org',
+        ]);
+
+    $org = Org::query()->where('name', 'Acme Org')->first();
+
+    $response->assertRedirect(route('dashboard', ['current_team' => $team->slug]));
+
+    expect($org)->not->toBeNull()
+        ->and($org->team_id)->toEqual($team->id)
+        ->and($user->fresh()->current_org_id)->toEqual($org->id);
+});
+
 test('users cannot switch to organization from another team', function () {
     $user = User::factory()->create();
     $anotherTeam = Team::factory()->create();
@@ -372,6 +391,14 @@ test('switching team updates current organization fallback', function () {
 
 test('guests cannot access teams', function () {
     $response = $this->get(route('teams.index'));
+
+    $response->assertRedirect(route('login'));
+});
+
+test('guests cannot create organizations', function () {
+    $response = $this->post(route('settings.orgs.store'), [
+        'name' => 'Acme Org',
+    ]);
 
     $response->assertRedirect(route('login'));
 });
