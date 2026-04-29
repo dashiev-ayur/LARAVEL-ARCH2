@@ -44,6 +44,64 @@ test('authenticated users can open posts page', function () {
     $response->assertOk();
 });
 
+test('guests are redirected to login from post create page', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+
+    $response = $this->get(route('posts.create', [
+        'current_team' => $team->slug,
+        'current_org' => $org->slug,
+    ]));
+
+    $response->assertRedirect(route('login'));
+});
+
+test('authenticated users can open post create page', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+
+    $this->actingAs($user)
+        ->get(route('posts.create', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+            'type' => 'news',
+            'page' => 2,
+            'per_page' => 10,
+            'search' => 'draft',
+            'filter_status' => 'draft',
+            'sort_by' => 'updated_at',
+            'sort_direction' => 'desc',
+        ]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('posts/edit')
+            ->where('activeType', 'news')
+            ->where('post', null)
+            ->where('postTypeUi.news.filterButtonTitle', 'Новости')
+            ->where('postTypeUi.news.newButtonTitle', 'Новая новость')
+            ->has('postTypes', 4)
+            ->where('postsListQuery.page', 2)
+            ->where('postsListQuery.per_page', 10)
+            ->where('postsListQuery.search', 'draft')
+            ->where('postsListQuery.filter_status', 'draft')
+            ->where('postsListQuery.sort_by', 'updated_at')
+            ->where('postsListQuery.sort_direction', 'desc'),
+        );
+});
+
 test('guests are redirected to login from post edit page', function () {
     /** @var TestCase $this */
     $user = User::factory()->create();
@@ -96,6 +154,15 @@ test('authenticated users can open post edit page', function () {
             'current_team' => $team->slug,
             'current_org' => $org->slug,
             'post' => $post,
+            'page' => 3,
+            'per_page' => 25,
+            'search' => 'editable',
+            'filter_title' => 'News',
+            'filter_status' => 'draft',
+            'filter_published_at' => '2026-04-29',
+            'filter_updated_at' => '2026-04-30',
+            'sort_by' => 'title',
+            'sort_direction' => 'asc',
         ]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
@@ -110,7 +177,16 @@ test('authenticated users can open post edit page', function () {
             ->where('post.title', 'Editable News')
             ->where('post.slug', 'editable-news')
             ->where('post.excerpt', 'Editable excerpt')
-            ->where('post.content', 'Editable content'),
+            ->where('post.content', 'Editable content')
+            ->where('postsListQuery.page', 3)
+            ->where('postsListQuery.per_page', 25)
+            ->where('postsListQuery.search', 'editable')
+            ->where('postsListQuery.filter_title', 'News')
+            ->where('postsListQuery.filter_status', 'draft')
+            ->where('postsListQuery.filter_published_at', '2026-04-29')
+            ->where('postsListQuery.filter_updated_at', '2026-04-30')
+            ->where('postsListQuery.sort_by', 'title')
+            ->where('postsListQuery.sort_direction', 'asc'),
         );
 });
 
@@ -435,6 +511,12 @@ test('authenticated users can create post with generated slug', function () {
         ->post(route('posts.store', [
             'current_team' => $team->slug,
             'current_org' => $org->slug,
+            'page' => 2,
+            'per_page' => 25,
+            'search' => 'brand',
+            'filter_status' => 'draft',
+            'sort_by' => 'title',
+            'sort_direction' => 'asc',
         ]), [
             'type' => 'news',
             'title' => 'Brand News',
@@ -446,6 +528,12 @@ test('authenticated users can create post with generated slug', function () {
             'current_team' => $team->slug,
             'current_org' => $org->slug,
             'type' => 'news',
+            'page' => 2,
+            'per_page' => 25,
+            'search' => 'brand',
+            'filter_status' => 'draft',
+            'sort_by' => 'title',
+            'sort_direction' => 'asc',
         ]));
 
     $this->assertDatabaseHas('posts', [
@@ -527,6 +615,11 @@ test('authenticated users can update post', function () {
             'current_team' => $team->slug,
             'current_org' => $org->slug,
             'post' => $post,
+            'page' => 4,
+            'per_page' => 10,
+            'filter_title' => 'Old',
+            'filter_published_at' => '2026-04-29',
+            'sort_by' => 'updated_at',
         ]), [
             'type' => 'news',
             'title' => 'Updated Title',
@@ -539,6 +632,11 @@ test('authenticated users can update post', function () {
             'current_team' => $team->slug,
             'current_org' => $org->slug,
             'type' => 'news',
+            'page' => 4,
+            'per_page' => 10,
+            'filter_title' => 'Old',
+            'filter_published_at' => '2026-04-29',
+            'sort_by' => 'updated_at',
         ]));
 
     $this->assertDatabaseHas('posts', [

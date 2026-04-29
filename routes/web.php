@@ -25,6 +25,7 @@ Route::prefix('{current_team}')
             ->name('categories.byType');
         Route::get('{current_org}/posts', [PostController::class, 'index'])->name('posts.index');
         Route::post('{current_org}/posts', [PostController::class, 'store'])->name('posts.store');
+        Route::get('{current_org}/posts/create', [PostController::class, 'create'])->name('posts.create');
         Route::get('{current_org}/posts/{post}/edit', [PostController::class, 'edit'])->name('posts.edit');
         Route::patch('{current_org}/posts/{post}', [PostController::class, 'update'])->name('posts.update');
         Route::delete('{current_org}/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');

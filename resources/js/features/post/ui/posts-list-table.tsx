@@ -113,11 +113,36 @@ export function PostsListTable({
                     currentTeam && currentOrg ? (
                         <Button variant="ghost" size="icon" asChild>
                             <Link
-                                href={editPost.url({
-                                    current_team: currentTeam.slug,
-                                    current_org: currentOrg.slug,
-                                    post: row.original.id,
-                                })}
+                                href={editPost.url(
+                                    {
+                                        current_team: currentTeam.slug,
+                                        current_org: currentOrg.slug,
+                                        post: row.original.id,
+                                    },
+                                    {
+                                        query: {
+                                            page: postsPagination.currentPage,
+                                            per_page: postsPagination.perPage,
+                                            search:
+                                                postsFilters.search ||
+                                                undefined,
+                                            filter_title:
+                                                postsFilters.title || undefined,
+                                            filter_status:
+                                                postsFilters.status ||
+                                                undefined,
+                                            filter_published_at:
+                                                postsFilters.publishedAt ||
+                                                undefined,
+                                            filter_updated_at:
+                                                postsFilters.updatedAt ||
+                                                undefined,
+                                            sort_by: postsSorting.sortBy,
+                                            sort_direction:
+                                                postsSorting.sortDirection,
+                                        },
+                                    },
+                                )}
                                 aria-label={`Редактировать запись ${row.original.title}`}
                             >
                                 <Pencil className="h-4 w-4" />
@@ -137,7 +162,7 @@ export function PostsListTable({
                 enableSorting: false,
             }),
         ],
-        [currentOrg, currentTeam],
+        [currentOrg, currentTeam, postsFilters, postsPagination, postsSorting],
     );
 
     const pagination = useMemo<PaginationState>(
@@ -191,6 +216,7 @@ export function PostsListTable({
 
     const currentQuery = useMemo(
         () => ({
+            page: postsPagination.currentPage,
             per_page: postsPagination.perPage,
             search: postsFilters.search || undefined,
             filter_title: postsFilters.title || undefined,
@@ -200,7 +226,12 @@ export function PostsListTable({
             sort_by: postsSorting.sortBy,
             sort_direction: postsSorting.sortDirection,
         }),
-        [postsFilters, postsPagination.perPage, postsSorting],
+        [
+            postsFilters,
+            postsPagination.currentPage,
+            postsPagination.perPage,
+            postsSorting,
+        ],
     );
 
     const buildPostsListHref = useCallback(

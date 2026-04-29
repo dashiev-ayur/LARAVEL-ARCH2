@@ -30,6 +30,27 @@ class PostController extends Controller
     private const ALLOWED_SORT_DIRECTIONS = ['asc', 'desc'];
 
     /**
+     * Показать страницу создания записи текущей организации.
+     */
+    public function create(
+        Request $request,
+        PostTypeHandlerFactory $postTypeHandlerFactory,
+        string $current_team,
+        string $current_org,
+    ): Response {
+        $this->resolveCurrentOrg($request, $current_org);
+        $activeType = $this->resolvePostTypeFromRequest($request);
+
+        return Inertia::render('posts/edit', [
+            'activeType' => $activeType,
+            'post' => null,
+            'postsListQuery' => $this->postsListQueryToInertiaArray($request),
+            'postTypeUi' => $this->postTypeUiToInertiaArray($postTypeHandlerFactory),
+            'postTypes' => PostType::values(),
+        ]);
+    }
+
+    /**
      * Показать страницу редактирования записи текущей организации.
      */
     public function edit(
@@ -45,6 +66,7 @@ class PostController extends Controller
         return Inertia::render('posts/edit', [
             'activeType' => $post->type instanceof PostType ? $post->type->value : (string) $post->type,
             'post' => $this->postToInertiaArray($post),
+            'postsListQuery' => $this->postsListQueryToInertiaArray($request),
             'postTypeUi' => $this->postTypeUiToInertiaArray($postTypeHandlerFactory),
             'postTypes' => PostType::values(),
         ]);
@@ -82,6 +104,7 @@ class PostController extends Controller
             'current_team' => $current_team,
             'current_org' => $org->slug,
             'type' => $type,
+            ...$this->postsListQueryToRouteParameters($request),
         ]);
     }
 
@@ -118,6 +141,7 @@ class PostController extends Controller
             'current_team' => $current_team,
             'current_org' => $org->slug,
             'type' => $type,
+            ...$this->postsListQueryToRouteParameters($request),
         ]);
     }
 
@@ -316,5 +340,83 @@ class PostController extends Controller
                 ];
             })
             ->all();
+    }
+
+    /**
+     * @return array{page: int, per_page: int, search: string, filter_title: string, filter_status: string, filter_published_at: string, filter_updated_at: string, sort_by: string, sort_direction: string}
+     */
+    private function postsListQueryToInertiaArray(Request $request): array
+    {
+        $perPage = $request->integer('per_page', self::DEFAULT_PER_PAGE);
+        if (! in_array($perPage, self::ALLOWED_PER_PAGE, true)) {
+            $perPage = self::DEFAULT_PER_PAGE;
+        }
+
+        $sortBy = (string) $request->query('sort_by', self::DEFAULT_SORT_BY);
+        if (! in_array($sortBy, self::ALLOWED_SORT_FIELDS, true)) {
+            $sortBy = self::DEFAULT_SORT_BY;
+        }
+
+        $sortDirection = (string) $request->query('sort_direction', self::DEFAULT_SORT_DIRECTION);
+        if (! in_array($sortDirection, self::ALLOWED_SORT_DIRECTIONS, true)) {
+            $sortDirection = self::DEFAULT_SORT_DIRECTION;
+        }
+
+        $filterPublishedAt = trim((string) $request->query('filter_published_at', ''));
+        $filterUpdatedAt = trim((string) $request->query('filter_updated_at', ''));
+
+        return [
+            'page' => max($request->integer('page', 1), 1),
+            'per_page' => $perPage,
+            'search' => trim((string) $request->query('search', '')),
+            'filter_title' => trim((string) $request->query('filter_title', '')),
+            'filter_status' => trim((string) $request->query('filter_status', '')),
+            'filter_published_at' => $this->isValidDateFilter($filterPublishedAt) ? $filterPublishedAt : '',
+            'filter_updated_at' => $this->isValidDateFilter($filterUpdatedAt) ? $filterUpdatedAt : '',
+            'sort_by' => $sortBy,
+            'sort_direction' => $sortDirection,
+        ];
+    }
+
+    /**
+     * @return array<string, int|string>
+     */
+    private function postsListQueryToRouteParameters(Request $request): array
+    {
+        $postsListQuery = $this->postsListQueryToInertiaArray($request);
+        $routeParameters = [];
+
+        if ($postsListQuery['page'] > 1) {
+            $routeParameters['page'] = $postsListQuery['page'];
+        }
+
+        if ($postsListQuery['per_page'] !== self::DEFAULT_PER_PAGE) {
+            $routeParameters['per_page'] = $postsListQuery['per_page'];
+        }
+
+        foreach (['search', 'filter_title', 'filter_status', 'filter_published_at', 'filter_updated_at'] as $key) {
+            if ($postsListQuery[$key] !== '') {
+                $routeParameters[$key] = $postsListQuery[$key];
+            }
+        }
+
+        if ($postsListQuery['sort_by'] !== self::DEFAULT_SORT_BY) {
+            $routeParameters['sort_by'] = $postsListQuery['sort_by'];
+        }
+
+        if ($postsListQuery['sort_direction'] !== self::DEFAULT_SORT_DIRECTION) {
+            $routeParameters['sort_direction'] = $postsListQuery['sort_direction'];
+        }
+
+        return $routeParameters;
+    }
+
+    private function resolvePostTypeFromRequest(Request $request): string
+    {
+        $type = (string) $request->query('type', PostType::Page->value);
+
+        return in_array($type, PostType::values(), true)
+            ? $type
+            : PostType::Page->value;
     }
 }

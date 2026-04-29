@@ -28,6 +28,18 @@ export type PostsListSorting = {
     sortDirection: 'asc' | 'desc';
 };
 
+export type PostsListQuery = {
+    page: number;
+    per_page: number;
+    search: string;
+    filter_title: string;
+    filter_status: string;
+    filter_published_at: string;
+    filter_updated_at: string;
+    sort_by: string;
+    sort_direction: string;
+};
+
 /**
  * Пропы Inertia для страницы списка записей (согласованы с `PostController@index`).
  */
@@ -54,5 +66,6 @@ export type PostEditPageProps = {
     activeType: string;
     postTypeUi: Record<string, PostTypeUiItem>;
     postTypes: readonly string[];
-    post: PostListRow;
+    post: PostListRow | null;
+    postsListQuery: PostsListQuery;
 };

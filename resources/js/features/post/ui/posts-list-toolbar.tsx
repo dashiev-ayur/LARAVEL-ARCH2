@@ -1,7 +1,8 @@
 import { Search, SlidersHorizontal } from 'lucide-react';
+import { create as createPost } from '@/routes/posts';
 import { Button } from '@/shared/ui/button';
 import type { PostTypeUiItem } from '../model/types';
-import { CreatePostDialog } from './create-post-dialog';
+import { ButtonNewPost } from './button-new-post';
 import { PostTypeFilter } from './post-type-filter';
 
 type PostsListToolbarProps = {
@@ -36,6 +37,22 @@ export function PostsListToolbar({
     onToggleSearch,
     onToggleFilters,
 }: PostsListToolbarProps) {
+    const createHref =
+        currentTeam && currentOrg
+            ? createPost.url(
+                  {
+                      current_team: currentTeam.slug,
+                      current_org: currentOrg.slug,
+                  },
+                  {
+                      query: {
+                          type: activeType,
+                          ...query,
+                      },
+                  },
+              )
+            : undefined;
+
     return (
         <>
             <PostTypeFilter
@@ -71,11 +88,10 @@ export function PostsListToolbar({
                 >
                     <SlidersHorizontal className="size-4" />
                 </Button>
-                <CreatePostDialog
+                <ButtonNewPost
                     className="shrink-0"
-                    currentTeam={currentTeam}
-                    currentOrg={currentOrg}
-                    activeType={activeType}
+                    disabled={!currentTeam || !currentOrg}
+                    href={createHref}
                     newButtonTitle={
                         postTypeUi[activeType]?.newButtonTitle ?? 'Новая запись'
                     }
