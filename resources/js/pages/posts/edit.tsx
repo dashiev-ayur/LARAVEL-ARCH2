@@ -450,7 +450,7 @@ function buildPostsListHref(
         return '/posts';
     }
 
-    if (activeType === 'page') {
+    if (activeType === 'news') {
         return postsIndex.url(
             {
                 current_team: currentTeam.slug,

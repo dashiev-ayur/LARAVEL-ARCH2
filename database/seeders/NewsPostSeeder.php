@@ -118,7 +118,7 @@ class NewsPostSeeder extends Seeder
             Post::factory()->create([
                 'org_id' => self::ORG_ID,
                 'author_id' => $author->id,
-                'type' => PostType::News,
+                'type' => PostType::News->value,
                 'status' => 'published',
                 'slug' => Str::slug($example['title']).'-'.str_pad((string) $number, 3, '0', STR_PAD_LEFT),
                 'title' => $example['title'],

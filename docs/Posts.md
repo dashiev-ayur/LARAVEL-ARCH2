@@ -1,6 +1,6 @@
 # Записи для организаций
 
-Универсальные типы записей: `page`, `news`, `article`, `product`.
+Универсальные типы записей: `news`, `article`, `product`.
 
 ## Структура таблиц
 
@@ -17,7 +17,7 @@
 | `org_id` | `bigint unsigned` | Нет | Владелец записи (организация) |
 | `author_id` | `bigint unsigned` | Да | Автор записи |
 | `parent_id` | `bigint unsigned` | Да | Родитель для древовидной структуры |
-| `type` | `string` | Нет | Тип записи: `news`, `article`, `page`, `product` |
+| `type` | `string` | Нет | Тип записи: `news`, `article`, `product` |
 | `status` | `string` | Нет | Статус: `draft`, `scheduled`, `published`, `archived` |
 | `acl_resource` | `string` | Да | ACL-ресурс для ограничения доступа (например: `admin`, `news.admin`) |
 | `slug` | `string` | Нет | ЧПУ-идентификатор |
@@ -92,7 +92,7 @@
 
 Для управления записями создана отдельная страница `/{current_team}/{current_org}/posts/{type?}`.
 
-- Сверху таблицы кнопки на `/{current_team}/{current_org}/posts/[type]`, где `type` — тип записи (`page`, `news`, `article`, `product`).
+- Сверху таблицы кнопки на `/{current_team}/{current_org}/posts/[type]`, где `type` — тип записи (`news`, `article`, `product`). Тип `news` открывается также по короткому URL `/{current_team}/{current_org}/posts`.
 - Таблица всегда фильтруется по `type`, который берётся из URL.
 - Для таблицы используется `@tanstack/react-table` и общие компоненты таблиц из `resources/js/shared/ui/table`.
 - Список записей поддерживает серверную пагинацию, поиск, фильтры по колонкам и сортировку.

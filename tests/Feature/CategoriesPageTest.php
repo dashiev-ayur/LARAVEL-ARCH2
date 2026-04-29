@@ -58,34 +58,34 @@ test('categories page exposes categories in tree order', function () {
 
     $rootCategory = Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'page',
+        'type' => 'news',
         'title' => 'Root Category',
         'slug' => 'root-category',
     ]);
     Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'page',
+        'type' => 'news',
         'title' => 'Second Root',
         'slug' => 'second-root',
     ]);
     Category::factory()->create([
         'org_id' => $org->id,
         'parent_id' => $rootCategory->id,
-        'type' => 'page',
+        'type' => 'news',
         'title' => 'Child Category',
         'slug' => 'child-category',
     ]);
     $rootCategory->posts()->attach(
         Post::factory()->count(2)->create([
             'org_id' => $org->id,
-            'type' => 'page',
+            'type' => 'news',
         ])->pluck('id')->all(),
     );
     Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'news',
-        'title' => 'News Category',
-        'slug' => 'news-category',
+        'type' => 'article',
+        'title' => 'Article Category',
+        'slug' => 'article-category',
     ]);
 
     $this->actingAs($user)
@@ -95,10 +95,10 @@ test('categories page exposes categories in tree order', function () {
         ]))
         ->assertInertia(fn (Assert $page) => $page
             ->component('categories/index')
-            ->where('activeType', 'page')
-            ->has('postTypes', 4)
-            ->has('postTypeUi', 4)
-            ->where('postTypeUi.page.filterButtonTitle', 'Страницы')
+            ->where('activeType', 'news')
+            ->has('postTypes', 3)
+            ->has('postTypeUi', 3)
+            ->where('postTypeUi.news.filterButtonTitle', 'Новости')
             ->has('categories', 3)
             ->where('categories.0.title', 'Root Category')
             ->where('categories.0.depth', 0)
@@ -108,7 +108,7 @@ test('categories page exposes categories in tree order', function () {
             ->where('categories.1.title', 'Child Category')
             ->where('categories.1.depth', 1)
             ->where('categories.1.parent_id', $rootCategory->id)
-            ->where('categories.1.type', 'page')
+            ->where('categories.1.type', 'news')
             ->where('categories.1.slug', 'child-category')
             ->where('categories.1.posts_count', 0)
             ->where('categories.1.children_count', 0)
@@ -128,15 +128,15 @@ test('categories page filters categories by type from url', function () {
     ]);
     $user->update(['current_org_id' => $org->id]);
 
-    $pageRootCategory = Category::factory()->create([
+    $articleRootCategory = Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'page',
-        'title' => 'Page Root',
-        'slug' => 'page-root',
+        'type' => 'article',
+        'title' => 'Article Root',
+        'slug' => 'article-root',
     ]);
     Category::factory()->create([
         'org_id' => $org->id,
-        'parent_id' => $pageRootCategory->id,
+        'parent_id' => $articleRootCategory->id,
         'type' => 'news',
         'title' => 'News Child',
         'slug' => 'news-child',
@@ -158,7 +158,7 @@ test('categories page filters categories by type from url', function () {
             ->component('categories/index')
             ->where('activeType', 'news')
             ->where('postTypeUi.news.filterButtonTitle', 'Новости')
-            ->has('postTypes', 4)
+            ->has('postTypes', 3)
             ->has('categories', 2)
             ->where('categories.0.title', 'News Child')
             ->where('categories.0.depth', 0)
@@ -167,6 +167,22 @@ test('categories page filters categories by type from url', function () {
             ->where('categories.1.depth', 0)
             ->where('categories.1.type', 'news'),
         );
+});
+
+test('categories page no longer renders page type route', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+
+    $this->actingAs($user)
+        ->get("/{$team->slug}/{$org->slug}/categories/page")
+        ->assertMethodNotAllowed();
 });
 
 test('authenticated users can create category with generated slug', function () {
@@ -195,10 +211,9 @@ test('authenticated users can create category with generated slug', function () 
             'type' => 'news',
             'title' => 'Brand News',
         ])
-        ->assertRedirect(route('categories.byType', [
+        ->assertRedirect(route('categories.index', [
             'current_team' => $team->slug,
             'current_org' => $org->slug,
-            'type' => 'news',
         ]));
 
     $this->assertDatabaseHas('categories', [
@@ -236,10 +251,9 @@ test('authenticated users can create category with parent', function () {
             'title' => 'Child News',
             'slug' => 'child-news',
         ])
-        ->assertRedirect(route('categories.byType', [
+        ->assertRedirect(route('categories.index', [
             'current_team' => $team->slug,
             'current_org' => $org->slug,
-            'type' => 'news',
         ]));
 
     $this->assertDatabaseHas('categories', [
@@ -282,10 +296,9 @@ test('created category receives the last sibling sort order', function () {
             'title' => 'Last Child',
             'slug' => 'last-child',
         ])
-        ->assertRedirect(route('categories.byType', [
+        ->assertRedirect(route('categories.index', [
             'current_team' => $team->slug,
             'current_org' => $org->slug,
-            'type' => 'news',
         ]));
 
     $this->assertDatabaseHas('categories', [
@@ -310,14 +323,14 @@ test('categories page orders sibling categories by sort order', function () {
 
     Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'page',
+        'type' => 'news',
         'title' => 'Alphabetically First',
         'slug' => 'alphabetically-first',
         'sort_order' => 10,
     ]);
     Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'page',
+        'type' => 'news',
         'title' => 'Alphabetically Last',
         'slug' => 'alphabetically-last',
         'sort_order' => 0,
@@ -350,7 +363,7 @@ test('category creation rejects duplicate slug in the same org and type', functi
 
     Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'page',
+        'type' => 'news',
         'title' => 'Existing Category',
         'slug' => 'existing-category',
     ]);
@@ -364,7 +377,7 @@ test('category creation rejects duplicate slug in the same org and type', functi
             'current_team' => $team->slug,
             'current_org' => $org->slug,
         ]), [
-            'type' => 'page',
+            'type' => 'news',
             'title' => 'Another Category',
             'slug' => 'existing-category',
         ])
@@ -393,11 +406,11 @@ test('category creation rejects parent from another org or type', function () {
 
     $otherTypeParent = Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'news',
+        'type' => 'article',
     ]);
     $otherOrgParent = Category::factory()->create([
         'org_id' => $otherOrg->id,
-        'type' => 'page',
+        'type' => 'news',
     ]);
 
     foreach ([$otherTypeParent, $otherOrgParent] as $parentCategory) {
@@ -410,7 +423,7 @@ test('category creation rejects parent from another org or type', function () {
                 'current_team' => $team->slug,
                 'current_org' => $org->slug,
             ]), [
-                'type' => 'page',
+                'type' => 'news',
                 'parent_id' => $parentCategory->id,
                 'title' => 'Invalid Parent',
                 'slug' => 'invalid-parent-'.$parentCategory->id,
@@ -436,12 +449,12 @@ test('authenticated users can update category without changing parent', function
 
     $parentCategory = Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'page',
+        'type' => 'news',
     ]);
     $category = Category::factory()->create([
         'org_id' => $org->id,
         'parent_id' => $parentCategory->id,
-        'type' => 'page',
+        'type' => 'news',
         'title' => 'Old Category',
         'slug' => 'old-category',
     ]);
@@ -485,11 +498,11 @@ test('authenticated users can update category parent', function () {
 
     $parentCategory = Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'page',
+        'type' => 'news',
     ]);
     $category = Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'page',
+        'type' => 'news',
         'title' => 'Child Category',
         'slug' => 'child-category',
     ]);
@@ -500,7 +513,7 @@ test('authenticated users can update category parent', function () {
             'current_org' => $org->slug,
             'category' => $category,
         ]), [
-            'type' => 'page',
+            'type' => 'news',
             'parent_id' => $parentCategory->id,
             'title' => 'Child Category',
             'slug' => 'child-category',
@@ -529,19 +542,19 @@ test('category update rejects descendant parent', function () {
 
     $category = Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'page',
+        'type' => 'news',
         'title' => 'Root Category',
         'slug' => 'root-category',
     ]);
     $childCategory = Category::factory()->create([
         'org_id' => $org->id,
         'parent_id' => $category->id,
-        'type' => 'page',
+        'type' => 'news',
     ]);
     $grandchildCategory = Category::factory()->create([
         'org_id' => $org->id,
         'parent_id' => $childCategory->id,
-        'type' => 'page',
+        'type' => 'news',
     ]);
 
     $this->actingAs($user)
@@ -554,7 +567,7 @@ test('category update rejects descendant parent', function () {
             'current_org' => $org->slug,
             'category' => $category,
         ]), [
-            'type' => 'page',
+            'type' => 'news',
             'parent_id' => $grandchildCategory->id,
             'title' => 'Root Category',
             'slug' => 'root-category',
@@ -579,12 +592,12 @@ test('authenticated users can reorder root categories', function () {
 
     $firstCategory = Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'page',
+        'type' => 'news',
         'sort_order' => 0,
     ]);
     $secondCategory = Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'page',
+        'type' => 'news',
         'sort_order' => 1,
     ]);
 
@@ -593,7 +606,7 @@ test('authenticated users can reorder root categories', function () {
             'current_team' => $team->slug,
             'current_org' => $org->slug,
         ]), [
-            'type' => 'page',
+            'type' => 'news',
             'items' => [
                 ['id' => $secondCategory->id, 'parent_id' => null, 'sort_order' => 0],
                 ['id' => $firstCategory->id, 'parent_id' => null, 'sort_order' => 1],
@@ -656,10 +669,9 @@ test('authenticated users can reorder categories and change parent', function ()
                 ['id' => $firstChild->id, 'parent_id' => $parentCategory->id, 'sort_order' => 1],
             ],
         ])
-        ->assertRedirect(route('categories.byType', [
+        ->assertRedirect(route('categories.index', [
             'current_team' => $team->slug,
             'current_org' => $org->slug,
-            'type' => 'news',
         ]));
 
     $this->assertDatabaseHas('categories', [
@@ -687,12 +699,12 @@ test('category reorder rejects descendant parent', function () {
 
     $category = Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'page',
+        'type' => 'news',
     ]);
     $childCategory = Category::factory()->create([
         'org_id' => $org->id,
         'parent_id' => $category->id,
-        'type' => 'page',
+        'type' => 'news',
     ]);
 
     $this->actingAs($user)
@@ -704,7 +716,7 @@ test('category reorder rejects descendant parent', function () {
             'current_team' => $team->slug,
             'current_org' => $org->slug,
         ]), [
-            'type' => 'page',
+            'type' => 'news',
             'items' => [
                 ['id' => $category->id, 'parent_id' => $childCategory->id, 'sort_order' => 0],
                 ['id' => $childCategory->id, 'parent_id' => $category->id, 'sort_order' => 0],
@@ -735,11 +747,11 @@ test('category reorder rejects categories from another org', function () {
 
     $category = Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'page',
+        'type' => 'news',
     ]);
     $otherOrgCategory = Category::factory()->create([
         'org_id' => $otherOrg->id,
-        'type' => 'page',
+        'type' => 'news',
     ]);
 
     $this->actingAs($user)
@@ -751,7 +763,7 @@ test('category reorder rejects categories from another org', function () {
             'current_team' => $team->slug,
             'current_org' => $org->slug,
         ]), [
-            'type' => 'page',
+            'type' => 'news',
             'items' => [
                 ['id' => $category->id, 'parent_id' => null, 'sort_order' => 0],
                 ['id' => $otherOrgCategory->id, 'parent_id' => null, 'sort_order' => 1],
@@ -777,7 +789,7 @@ test('category reorder rejects parent from another type', function () {
 
     $category = Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'page',
+        'type' => 'article',
     ]);
     $newsCategory = Category::factory()->create([
         'org_id' => $org->id,
@@ -793,7 +805,7 @@ test('category reorder rejects parent from another type', function () {
             'current_team' => $team->slug,
             'current_org' => $org->slug,
         ]), [
-            'type' => 'page',
+            'type' => 'article',
             'items' => [
                 ['id' => $category->id, 'parent_id' => $newsCategory->id, 'sort_order' => 0],
             ],

@@ -165,7 +165,7 @@ class CategoryController extends Controller
         $org = $this->resolveCurrentOrg($request, $current_org);
         $activeType = in_array($type, PostType::values(), true)
             ? $type
-            : PostType::Page->value;
+            : PostType::News->value;
 
         /** @var Collection<int, Category> $categories */
         $categories = $org->categories()
@@ -215,7 +215,7 @@ class CategoryController extends Controller
 
     private function redirectToCategoriesIndex(string $currentTeamSlug, Org $org, string $type): RedirectResponse
     {
-        if ($type === PostType::Page->value) {
+        if ($type === PostType::News->value) {
             return to_route('categories.index', [
                 'current_team' => $currentTeamSlug,
                 'current_org' => $org->slug,

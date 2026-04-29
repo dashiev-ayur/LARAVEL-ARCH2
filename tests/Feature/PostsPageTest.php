@@ -93,7 +93,7 @@ test('authenticated users can open post create page', function () {
             ->where('post', null)
             ->where('postTypeUi.news.filterButtonTitle', 'Новости')
             ->where('postTypeUi.news.newButtonTitle', 'Новая новость')
-            ->has('postTypes', 4)
+            ->has('postTypes', 3)
             ->where('postsListQuery.page', 2)
             ->where('postsListQuery.per_page', 10)
             ->where('postsListQuery.search', 'draft')
@@ -164,9 +164,9 @@ test('authenticated users can open post edit page', function () {
     ]);
     Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'page',
-        'title' => 'Page Category',
-        'slug' => 'page-category',
+        'type' => 'article',
+        'title' => 'Article Category',
+        'slug' => 'article-category',
     ]);
     $post->categories()->attach($childCategory->id);
 
@@ -191,7 +191,7 @@ test('authenticated users can open post edit page', function () {
             ->where('activeType', 'news')
             ->where('postTypeUi.news.filterButtonTitle', 'Новости')
             ->where('postTypeUi.news.newButtonTitle', 'Новая новость')
-            ->has('postTypes', 4)
+            ->has('postTypes', 3)
             ->where('post.id', $post->id)
             ->where('post.type', 'news')
             ->where('post.status', 'draft')
@@ -298,11 +298,11 @@ test('post category links reject categories from another type', function () {
         'title' => 'Typed News',
         'slug' => 'typed-news',
     ]);
-    $pageCategory = Category::factory()->create([
+    $articleCategory = Category::factory()->create([
         'org_id' => $org->id,
-        'type' => 'page',
-        'title' => 'Page Category',
-        'slug' => 'page-category',
+        'type' => 'article',
+        'title' => 'Article Category',
+        'slug' => 'article-category',
     ]);
 
     $this->actingAs($user)
@@ -316,7 +316,7 @@ test('post category links reject categories from another type', function () {
             'current_org' => $org->slug,
             'post' => $post,
         ]), [
-            'category_ids' => [$pageCategory->id],
+            'category_ids' => [$articleCategory->id],
         ])
         ->assertRedirect(route('posts.edit', [
             'current_team' => $team->slug,
@@ -327,7 +327,7 @@ test('post category links reject categories from another type', function () {
 
     $this->assertDatabaseMissing('category_post', [
         'post_id' => $post->id,
-        'category_id' => $pageCategory->id,
+        'category_id' => $articleCategory->id,
     ]);
 });
 
@@ -385,9 +385,9 @@ test('posts page filters records by type from url', function () {
     Post::factory()->create([
         'org_id' => $org->id,
         'author_id' => $user->id,
-        'type' => 'page',
-        'title' => 'Page Post',
-        'slug' => 'page-post',
+        'type' => 'article',
+        'title' => 'Article Post',
+        'slug' => 'article-post',
     ]);
 
     $this->actingAs($user)
@@ -399,18 +399,18 @@ test('posts page filters records by type from url', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('posts/index')
             ->where('activeType', 'news')
-            ->has('postTypeUi', 4)
+            ->has('postTypeUi', 3)
             ->where('postTypeUi.news.filterButtonTitle', 'Новости')
             ->where('postTypeUi.news.newButtonTitle', 'Новая новость')
             ->has('posts', 1)
             ->where('posts.0.title', 'News Post')
             ->where('posts.0.excerpt', 'News Post Excerpt')
             ->where('posts.0.type', 'news')
-            ->has('postTypes', 4),
+            ->has('postTypes', 3),
         );
 });
 
-test('posts page defaults to page type when type is omitted', function () {
+test('posts page defaults to news type when type is omitted', function () {
     /** @var TestCase $this */
     $user = User::factory()->create();
     $team = $user->currentTeam;
@@ -424,9 +424,9 @@ test('posts page defaults to page type when type is omitted', function () {
     Post::factory()->create([
         'org_id' => $org->id,
         'author_id' => $user->id,
-        'type' => 'page',
-        'title' => 'Default Page Post',
-        'slug' => 'default-page-post',
+        'type' => 'news',
+        'title' => 'Default News Post',
+        'slug' => 'default-news-post',
     ]);
     Post::factory()->create([
         'org_id' => $org->id,
@@ -443,12 +443,12 @@ test('posts page defaults to page type when type is omitted', function () {
         ]))
         ->assertInertia(fn (Assert $page) => $page
             ->component('posts/index')
-            ->where('activeType', 'page')
-            ->where('postTypeUi.page.filterButtonTitle', 'Страницы')
-            ->where('postTypeUi.page.newButtonTitle', 'Новая страница')
+            ->where('activeType', 'news')
+            ->where('postTypeUi.news.filterButtonTitle', 'Новости')
+            ->where('postTypeUi.news.newButtonTitle', 'Новая новость')
             ->has('posts', 1)
-            ->where('posts.0.title', 'Default Page Post')
-            ->where('posts.0.type', 'page')
+            ->where('posts.0.title', 'Default News Post')
+            ->where('posts.0.type', 'news')
             ->where('postsPagination.currentPage', 1)
             ->where('postsPagination.lastPage', 1)
             ->where('postsPagination.perPage', 8)
@@ -456,6 +456,22 @@ test('posts page defaults to page type when type is omitted', function () {
             ->where('postsSorting.sortBy', 'id')
             ->where('postsSorting.sortDirection', 'desc'),
         );
+});
+
+test('posts page no longer renders page type route', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+
+    $this->actingAs($user)
+        ->get("/{$team->slug}/{$org->slug}/posts/page")
+        ->assertMethodNotAllowed();
 });
 
 test('posts page uses page query for server pagination', function () {
@@ -473,7 +489,7 @@ test('posts page uses page query for server pagination', function () {
         Post::factory()->create([
             'org_id' => $org->id,
             'author_id' => $user->id,
-            'type' => 'page',
+            'type' => 'news',
             'title' => "Post {$index}",
             'slug' => "post-{$index}",
         ]);
@@ -514,7 +530,7 @@ test('posts page applies per_page and column filters from query', function () {
         Post::factory()->create([
             'org_id' => $org->id,
             'author_id' => $user->id,
-            'type' => 'page',
+            'type' => 'news',
             'status' => $index % 2 === 0 ? 'published' : 'draft',
             'title' => $index === 30 ? 'Filtered Title' : "Post {$index}",
             'slug' => "post-{$index}",
@@ -560,14 +576,14 @@ test('posts page applies sorting from query', function () {
     Post::factory()->create([
         'org_id' => $org->id,
         'author_id' => $user->id,
-        'type' => 'page',
+        'type' => 'news',
         'title' => 'Beta Title',
         'slug' => 'beta-title',
     ]);
     Post::factory()->create([
         'org_id' => $org->id,
         'author_id' => $user->id,
-        'type' => 'page',
+        'type' => 'news',
         'title' => 'Alpha Title',
         'slug' => 'alpha-title',
     ]);
@@ -603,14 +619,14 @@ test('posts page applies search query', function () {
     Post::factory()->create([
         'org_id' => $org->id,
         'author_id' => $user->id,
-        'type' => 'page',
+        'type' => 'news',
         'title' => 'Laravel Searchable Post',
         'slug' => 'laravel-searchable-post',
     ]);
     Post::factory()->create([
         'org_id' => $org->id,
         'author_id' => $user->id,
-        'type' => 'page',
+        'type' => 'news',
         'title' => 'Unrelated Title',
         'slug' => 'unrelated-title',
     ]);
@@ -703,8 +719,8 @@ test('post creation rejects duplicate slug in the same org and type', function (
     Post::factory()->create([
         'org_id' => $org->id,
         'author_id' => $user->id,
-        'type' => 'page',
-        'title' => 'Existing Page',
+        'type' => 'news',
+        'title' => 'Existing News',
         'slug' => 'existing-page',
     ]);
 
@@ -717,8 +733,8 @@ test('post creation rejects duplicate slug in the same org and type', function (
             'current_team' => $team->slug,
             'current_org' => $org->slug,
         ]), [
-            'type' => 'page',
-            'title' => 'Another Page',
+            'type' => 'news',
+            'title' => 'Another News',
             'slug' => 'existing-page',
             'status' => 'draft',
         ])
@@ -743,7 +759,7 @@ test('authenticated users can update post', function () {
     $post = Post::factory()->create([
         'org_id' => $org->id,
         'author_id' => $user->id,
-        'type' => 'page',
+        'type' => 'news',
         'status' => 'draft',
         'title' => 'Old Title',
         'slug' => 'old-title',
@@ -807,16 +823,16 @@ test('post update rejects duplicate slug in the same org and type', function () 
     Post::factory()->create([
         'org_id' => $org->id,
         'author_id' => $user->id,
-        'type' => 'page',
-        'title' => 'Existing Page',
+        'type' => 'news',
+        'title' => 'Existing News',
         'slug' => 'existing-page',
     ]);
 
     $post = Post::factory()->create([
         'org_id' => $org->id,
         'author_id' => $user->id,
-        'type' => 'page',
-        'title' => 'Edited Page',
+        'type' => 'news',
+        'title' => 'Edited News',
         'slug' => 'edited-page',
     ]);
 
@@ -830,8 +846,8 @@ test('post update rejects duplicate slug in the same org and type', function () 
             'current_org' => $org->slug,
             'post' => $post,
         ]), [
-            'type' => 'page',
-            'title' => 'Edited Page',
+            'type' => 'news',
+            'title' => 'Edited News',
             'slug' => 'existing-page',
             'status' => 'draft',
         ])
@@ -856,9 +872,9 @@ test('authenticated users can delete draft post', function () {
     $post = Post::factory()->create([
         'org_id' => $org->id,
         'author_id' => $user->id,
-        'type' => 'page',
+        'type' => 'news',
         'status' => 'draft',
-        'title' => 'Draft Page',
+        'title' => 'Draft News',
         'slug' => 'draft-page',
     ]);
 
@@ -871,7 +887,7 @@ test('authenticated users can delete draft post', function () {
         ->assertRedirect(route('posts.byType', [
             'current_team' => $team->slug,
             'current_org' => $org->slug,
-            'type' => 'page',
+            'type' => 'news',
         ]));
 
     $this->assertSoftDeleted('posts', [
@@ -893,9 +909,9 @@ test('post deletion rejects non draft post', function () {
     $post = Post::factory()->create([
         'org_id' => $org->id,
         'author_id' => $user->id,
-        'type' => 'page',
+        'type' => 'news',
         'status' => 'published',
-        'title' => 'Published Page',
+        'title' => 'Published News',
         'slug' => 'published-page',
     ]);
 
@@ -932,7 +948,7 @@ test('post creation validates required title', function () {
             'current_team' => $team->slug,
             'current_org' => $org->slug,
         ]), [
-            'type' => 'page',
+            'type' => 'news',
             'title' => '',
             'status' => 'draft',
         ])

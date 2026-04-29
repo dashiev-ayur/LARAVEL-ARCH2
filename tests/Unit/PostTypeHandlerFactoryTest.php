@@ -1,7 +1,7 @@
 <?php
 
 use App\Enums\PostType;
-use App\PostTypes\Handlers\PagePostTypeHandler;
+use App\PostTypes\Handlers\NewsPostTypeHandler;
 use App\PostTypes\PostTypeHandlerFactory;
 use Tests\TestCase;
 
@@ -10,15 +10,15 @@ uses(TestCase::class);
 test('фабрика отдаёт handler с подписями из PHP-класса типа', function () {
     $factory = app(PostTypeHandlerFactory::class);
 
-    $page = $factory->make(PostType::Page);
+    $news = $factory->make(PostType::News);
 
-    expect($page)->toBeInstanceOf(PagePostTypeHandler::class)
-        ->and($page->getFilterButtonTitle())->toBe('Страницы')
-        ->and($page->getNewButtonTitle())->toBe('Новая страница');
+    expect($news)->toBeInstanceOf(NewsPostTypeHandler::class)
+        ->and($news->getFilterButtonTitle())->toBe('Новости')
+        ->and($news->getNewButtonTitle())->toBe('Новая новость');
 
-    $data = $page->toData();
+    $data = $news->toData();
     expect($data->toInertiaArray())->toBe([
-        'filterButtonTitle' => 'Страницы',
-        'newButtonTitle' => 'Новая страница',
+        'filterButtonTitle' => 'Новости',
+        'newButtonTitle' => 'Новая новость',
     ]);
 });

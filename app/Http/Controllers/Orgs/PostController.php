@@ -223,7 +223,7 @@ class PostController extends Controller
 
         $activeType = in_array($type, PostType::values(), true)
             ? $type
-            : PostType::Page->value;
+            : PostType::News->value;
 
         $perPage = $request->integer('per_page', self::DEFAULT_PER_PAGE);
         if (! in_array($perPage, self::ALLOWED_PER_PAGE, true)) {
@@ -519,10 +519,10 @@ class PostController extends Controller
 
     private function resolvePostTypeFromRequest(Request $request): string
     {
-        $type = (string) $request->query('type', PostType::Page->value);
+        $type = (string) $request->query('type', PostType::News->value);
 
         return in_array($type, PostType::values(), true)
             ? $type
-            : PostType::Page->value;
+            : PostType::News->value;
     }
 }

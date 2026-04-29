@@ -272,7 +272,7 @@ export function PostsListTable({
                 sort_direction: sortDirection,
             };
 
-            if (activeType === 'page') {
+            if (activeType === 'news') {
                 return postsIndex.url(
                     {
                         current_team: currentTeam.slug,

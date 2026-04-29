@@ -29,7 +29,7 @@ function buildCategoryTypeHref(
         return '/categories';
     }
 
-    if (type === 'page') {
+    if (type === 'news') {
         return categoriesIndex.url({
             current_team: currentTeam.slug,
             current_org: currentOrg.slug,
@@ -127,7 +127,7 @@ CategoriesIndex.layout = (props: {
                     ? buildCategoryTypeHref(
                           props.currentTeam,
                           props.currentOrg,
-                          props.activeType ?? 'page',
+                          props.activeType ?? 'news',
                       )
                     : '/categories',
         },

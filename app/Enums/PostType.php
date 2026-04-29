@@ -3,12 +3,11 @@
 namespace App\Enums;
 
 /**
- * Тип записи в каталоге (страница, новость, статья, товар).
+ * Тип записи в каталоге (новость, статья, товар).
  */
 enum PostType: string
 {
     case News = 'news';
-    case Page = 'page';
     case Article = 'article';
     case Product = 'product';
 
