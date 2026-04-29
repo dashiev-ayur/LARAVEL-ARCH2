@@ -1,5 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
+import { Pencil } from 'lucide-react';
 import type { CategoryListRow } from '@/entities/category';
+import { CreateCategoryDialog } from '@/features/category';
 import { dashboard } from '@/routes';
 import { byType, index as categoriesIndex } from '@/routes/categories';
 import { formatDateTime } from '@/shared/lib/format-date-time';
@@ -90,15 +92,13 @@ export default function CategoriesIndex() {
                                 );
                             })}
                         </div>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
+                        <CreateCategoryDialog
                             className="shrink-0"
-                            disabled
-                        >
-                            Добавить категорию
-                        </Button>
+                            currentTeam={currentTeam}
+                            currentOrg={currentOrg}
+                            activeType={activeType}
+                            categories={props.categories}
+                        />
                     </Table.Toolbar>
 
                     <Table.ScrollArea>
@@ -131,7 +131,9 @@ export default function CategoriesIndex() {
                                         Обновлено
                                     </Table.Head>
                                     <Table.Head variant="actions">
-                                        Действия
+                                        <span className="sr-only">
+                                            Действия
+                                        </span>
                                     </Table.Head>
                                 </Table.Row>
                             </Table.Header>
@@ -190,16 +192,25 @@ export default function CategoriesIndex() {
                                                 )}
                                             </Table.Cell>
                                             <Table.Cell variant="actions">
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    aria-label={`Редактировать категорию ${category.title}`}
-                                                    title="Редактирование категорий появится позже"
-                                                    disabled
-                                                >
-                                                    Изменить
-                                                </Button>
+                                                <CreateCategoryDialog
+                                                    currentTeam={currentTeam}
+                                                    currentOrg={currentOrg}
+                                                    activeType={activeType}
+                                                    categories={
+                                                        props.categories
+                                                    }
+                                                    category={category}
+                                                    trigger={
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            aria-label={`Редактировать категорию ${category.title}`}
+                                                        >
+                                                            <Pencil className="h-4 w-4" />
+                                                        </Button>
+                                                    }
+                                                />
                                             </Table.Cell>
                                         </Table.Row>
                                     ))

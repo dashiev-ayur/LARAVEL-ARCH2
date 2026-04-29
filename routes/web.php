@@ -17,6 +17,9 @@ Route::prefix('{current_team}')
     ->group(function () {
         Route::inertia('dashboard', 'dashboard')->name('dashboard');
         Route::get('{current_org}/categories', [CategoryController::class, 'index'])->name('categories.index');
+        Route::post('{current_org}/categories', [CategoryController::class, 'store'])->name('categories.store');
+        Route::patch('{current_org}/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+        Route::delete('{current_org}/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
         Route::get('{current_org}/categories/{type}', [CategoryController::class, 'index'])
             ->whereIn('type', PostType::values())
             ->name('categories.byType');
