@@ -29,6 +29,7 @@ class CategoryFactory extends Factory
             'acl_resource' => fake()->optional()->randomElement(['admin', 'news.admin', 'content.editor']),
             'slug' => Str::slug($title).'-'.fake()->unique()->numerify('####'),
             'title' => $title,
+            'sort_order' => 0,
         ];
     }
 }

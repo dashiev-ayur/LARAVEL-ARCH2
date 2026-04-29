@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Orgs;
 use App\Enums\PostType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Posts\StorePostRequest;
+use App\Http\Requests\Posts\UpdatePostCategoriesRequest;
 use App\Http\Requests\Posts\UpdatePostRequest;
+use App\Models\Category;
 use App\Models\Org;
 use App\Models\Post;
 use App\PostTypes\PostTypeHandlerFactory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -38,11 +41,12 @@ class PostController extends Controller
         string $current_team,
         string $current_org,
     ): Response {
-        $this->resolveCurrentOrg($request, $current_org);
+        $org = $this->resolveCurrentOrg($request, $current_org);
         $activeType = $this->resolvePostTypeFromRequest($request);
 
         return Inertia::render('posts/edit', [
             'activeType' => $activeType,
+            'categories' => $this->categoryRowsToInertiaArray($org, $activeType),
             'post' => null,
             'postsListQuery' => $this->postsListQueryToInertiaArray($request),
             'postTypeUi' => $this->postTypeUiToInertiaArray($postTypeHandlerFactory),
@@ -65,6 +69,11 @@ class PostController extends Controller
 
         return Inertia::render('posts/edit', [
             'activeType' => $post->type instanceof PostType ? $post->type->value : (string) $post->type,
+            'categories' => $this->categoryRowsToInertiaArray(
+                $org,
+                $post->type instanceof PostType ? $post->type->value : (string) $post->type,
+                $post,
+            ),
             'post' => $this->postToInertiaArray($post),
             'postsListQuery' => $this->postsListQueryToInertiaArray($request),
             'postTypeUi' => $this->postTypeUiToInertiaArray($postTypeHandlerFactory),
@@ -141,6 +150,36 @@ class PostController extends Controller
             'current_team' => $current_team,
             'current_org' => $org->slug,
             'type' => $type,
+            ...$this->postsListQueryToRouteParameters($request),
+        ]);
+    }
+
+    /**
+     * Обновить связи записи с категориями текущей организации.
+     */
+    public function updateCategories(
+        UpdatePostCategoriesRequest $request,
+        string $current_team,
+        string $current_org,
+        Post $post,
+    ): RedirectResponse {
+        $org = $this->resolveCurrentOrg($request, $current_org);
+        abort_unless((int) $post->org_id === (int) $org->id, 404);
+
+        $categoryIds = collect($request->validated('category_ids'))
+            ->map(fn (int|string $categoryId): int => (int) $categoryId)
+            ->unique()
+            ->values()
+            ->all();
+
+        $post->categories()->sync($categoryIds);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Связи с категориями сохранены.']);
+
+        return to_route('posts.edit', [
+            'current_team' => $current_team,
+            'current_org' => $org->slug,
+            'post' => $post,
             ...$this->postsListQueryToRouteParameters($request),
         ]);
     }
@@ -340,6 +379,73 @@ class PostController extends Controller
                 ];
             })
             ->all();
+    }
+
+    /**
+     * @return array<int, array{id: int, parent_id: int|null, depth: int, title: string, is_linked: bool}>
+     */
+    private function categoryRowsToInertiaArray(Org $org, string $type, ?Post $post = null): array
+    {
+        /** @var Collection<int, Category> $categories */
+        $categories = $org->categories()
+            ->select(['id', 'parent_id', 'type', 'title', 'sort_order'])
+            ->where('type', $type)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        $linkedCategoryIds = $post
+            ? $post->categories()->pluck('categories.id')->map(fn (int|string $id): int => (int) $id)->all()
+            : [];
+
+        $categoryIds = $categories->pluck('id')->all();
+
+        /** @var Collection<int, Collection<int, Category>> $categoriesByParent */
+        $categoriesByParent = $categories->groupBy(
+            fn (Category $category): int => in_array($category->parent_id, $categoryIds, true)
+                ? (int) $category->parent_id
+                : 0,
+        );
+
+        return $this->flattenCategoryRows($categoriesByParent, $linkedCategoryIds);
+    }
+
+    /**
+     * @param  Collection<int, Collection<int, Category>>  $categoriesByParent
+     * @param  array<int, int>  $linkedCategoryIds
+     * @param  array<int, true>  $visited
+     * @return array<int, array{id: int, parent_id: int|null, depth: int, title: string, is_linked: bool}>
+     */
+    private function flattenCategoryRows(
+        Collection $categoriesByParent,
+        array $linkedCategoryIds,
+        int $parentId = 0,
+        int $depth = 0,
+        array &$visited = [],
+    ): array {
+        $rows = [];
+
+        foreach ($categoriesByParent->get($parentId, collect()) as $category) {
+            if (isset($visited[$category->id])) {
+                continue;
+            }
+
+            $visited[$category->id] = true;
+            $rows[] = [
+                'id' => $category->id,
+                'parent_id' => $category->parent_id,
+                'depth' => $depth,
+                'title' => $category->title,
+                'is_linked' => in_array((int) $category->id, $linkedCategoryIds, true),
+            ];
+
+            array_push(
+                $rows,
+                ...$this->flattenCategoryRows($categoriesByParent, $linkedCategoryIds, $category->id, $depth + 1, $visited),
+            );
+        }
+
+        return $rows;
     }
 
     /**

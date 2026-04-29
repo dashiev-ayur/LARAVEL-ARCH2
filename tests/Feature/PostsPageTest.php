@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Category;
 use App\Models\Post;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -148,6 +149,26 @@ test('authenticated users can open post edit page', function () {
         'excerpt' => 'Editable excerpt',
         'content' => 'Editable content',
     ]);
+    $parentCategory = Category::factory()->create([
+        'org_id' => $org->id,
+        'type' => 'news',
+        'title' => 'Parent Category',
+        'slug' => 'parent-category',
+    ]);
+    $childCategory = Category::factory()->create([
+        'org_id' => $org->id,
+        'parent_id' => $parentCategory->id,
+        'type' => 'news',
+        'title' => 'Child Category',
+        'slug' => 'child-category',
+    ]);
+    Category::factory()->create([
+        'org_id' => $org->id,
+        'type' => 'page',
+        'title' => 'Page Category',
+        'slug' => 'page-category',
+    ]);
+    $post->categories()->attach($childCategory->id);
 
     $this->actingAs($user)
         ->get(route('posts.edit', [
@@ -178,6 +199,13 @@ test('authenticated users can open post edit page', function () {
             ->where('post.slug', 'editable-news')
             ->where('post.excerpt', 'Editable excerpt')
             ->where('post.content', 'Editable content')
+            ->has('categories', 2)
+            ->where('categories.0.id', $parentCategory->id)
+            ->where('categories.0.depth', 0)
+            ->where('categories.0.is_linked', false)
+            ->where('categories.1.id', $childCategory->id)
+            ->where('categories.1.depth', 1)
+            ->where('categories.1.is_linked', true)
             ->where('postsListQuery.page', 3)
             ->where('postsListQuery.per_page', 25)
             ->where('postsListQuery.search', 'editable')
@@ -188,6 +216,119 @@ test('authenticated users can open post edit page', function () {
             ->where('postsListQuery.sort_by', 'title')
             ->where('postsListQuery.sort_direction', 'asc'),
         );
+});
+
+test('authenticated users can update post category links', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+    $post = Post::factory()->create([
+        'org_id' => $org->id,
+        'author_id' => $user->id,
+        'type' => 'news',
+        'title' => 'Linked News',
+        'slug' => 'linked-news',
+    ]);
+    $oldCategory = Category::factory()->create([
+        'org_id' => $org->id,
+        'type' => 'news',
+        'title' => 'Old Category',
+        'slug' => 'old-category',
+    ]);
+    $newCategory = Category::factory()->create([
+        'org_id' => $org->id,
+        'type' => 'news',
+        'title' => 'New Category',
+        'slug' => 'new-category',
+    ]);
+    $post->categories()->attach($oldCategory->id);
+
+    $this->actingAs($user)
+        ->patch(route('posts.categories.update', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+            'post' => $post,
+            'page' => 3,
+            'per_page' => 25,
+            'search' => 'linked',
+            'sort_by' => 'title',
+        ]), [
+            'category_ids' => [$newCategory->id],
+        ])
+        ->assertRedirect(route('posts.edit', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+            'post' => $post,
+            'page' => 3,
+            'per_page' => 25,
+            'search' => 'linked',
+            'sort_by' => 'title',
+        ]));
+
+    $this->assertDatabaseMissing('category_post', [
+        'post_id' => $post->id,
+        'category_id' => $oldCategory->id,
+    ]);
+    $this->assertDatabaseHas('category_post', [
+        'post_id' => $post->id,
+        'category_id' => $newCategory->id,
+    ]);
+});
+
+test('post category links reject categories from another type', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+    $post = Post::factory()->create([
+        'org_id' => $org->id,
+        'author_id' => $user->id,
+        'type' => 'news',
+        'title' => 'Typed News',
+        'slug' => 'typed-news',
+    ]);
+    $pageCategory = Category::factory()->create([
+        'org_id' => $org->id,
+        'type' => 'page',
+        'title' => 'Page Category',
+        'slug' => 'page-category',
+    ]);
+
+    $this->actingAs($user)
+        ->from(route('posts.edit', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+            'post' => $post,
+        ]))
+        ->patch(route('posts.categories.update', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+            'post' => $post,
+        ]), [
+            'category_ids' => [$pageCategory->id],
+        ])
+        ->assertRedirect(route('posts.edit', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+            'post' => $post,
+        ]))
+        ->assertSessionHasErrors('category_ids.0');
+
+    $this->assertDatabaseMissing('category_post', [
+        'post_id' => $post->id,
+        'category_id' => $pageCategory->id,
+    ]);
 });
 
 test('post edit page rejects post from another org', function () {

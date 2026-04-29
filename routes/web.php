@@ -18,6 +18,7 @@ Route::prefix('{current_team}')
         Route::inertia('dashboard', 'dashboard')->name('dashboard');
         Route::get('{current_org}/categories', [CategoryController::class, 'index'])->name('categories.index');
         Route::post('{current_org}/categories', [CategoryController::class, 'store'])->name('categories.store');
+        Route::patch('{current_org}/categories/reorder', [CategoryController::class, 'reorder'])->name('categories.reorder');
         Route::patch('{current_org}/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
         Route::delete('{current_org}/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
         Route::get('{current_org}/categories/{type}', [CategoryController::class, 'index'])
@@ -28,6 +29,7 @@ Route::prefix('{current_team}')
         Route::get('{current_org}/posts/create', [PostController::class, 'create'])->name('posts.create');
         Route::get('{current_org}/posts/{post}/edit', [PostController::class, 'edit'])->name('posts.edit');
         Route::patch('{current_org}/posts/{post}', [PostController::class, 'update'])->name('posts.update');
+        Route::patch('{current_org}/posts/{post}/categories', [PostController::class, 'updateCategories'])->name('posts.categories.update');
         Route::delete('{current_org}/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
         Route::get('{current_org}/posts/{type}', [PostController::class, 'index'])
             ->whereIn('type', PostType::values())

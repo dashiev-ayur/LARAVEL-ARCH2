@@ -251,6 +251,92 @@ test('authenticated users can create category with parent', function () {
     ]);
 });
 
+test('created category receives the last sibling sort order', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+    $parentCategory = Category::factory()->create([
+        'org_id' => $org->id,
+        'type' => 'news',
+    ]);
+    Category::factory()->create([
+        'org_id' => $org->id,
+        'parent_id' => $parentCategory->id,
+        'type' => 'news',
+        'sort_order' => 4,
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('categories.store', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]), [
+            'type' => 'news',
+            'parent_id' => $parentCategory->id,
+            'title' => 'Last Child',
+            'slug' => 'last-child',
+        ])
+        ->assertRedirect(route('categories.byType', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+            'type' => 'news',
+        ]));
+
+    $this->assertDatabaseHas('categories', [
+        'org_id' => $org->id,
+        'parent_id' => $parentCategory->id,
+        'type' => 'news',
+        'slug' => 'last-child',
+        'sort_order' => 5,
+    ]);
+});
+
+test('categories page orders sibling categories by sort order', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+
+    Category::factory()->create([
+        'org_id' => $org->id,
+        'type' => 'page',
+        'title' => 'Alphabetically First',
+        'slug' => 'alphabetically-first',
+        'sort_order' => 10,
+    ]);
+    Category::factory()->create([
+        'org_id' => $org->id,
+        'type' => 'page',
+        'title' => 'Alphabetically Last',
+        'slug' => 'alphabetically-last',
+        'sort_order' => 0,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('categories.index', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('categories/index')
+            ->where('categories.0.title', 'Alphabetically Last')
+            ->where('categories.0.sort_order', 0)
+            ->where('categories.1.title', 'Alphabetically First')
+            ->where('categories.1.sort_order', 10),
+        );
+});
+
 test('category creation rejects duplicate slug in the same org and type', function () {
     /** @var TestCase $this */
     $user = User::factory()->create();
@@ -478,6 +564,245 @@ test('category update rejects descendant parent', function () {
             'current_org' => $org->slug,
         ]))
         ->assertSessionHasErrors('parent_id');
+});
+
+test('authenticated users can reorder root categories', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+
+    $firstCategory = Category::factory()->create([
+        'org_id' => $org->id,
+        'type' => 'page',
+        'sort_order' => 0,
+    ]);
+    $secondCategory = Category::factory()->create([
+        'org_id' => $org->id,
+        'type' => 'page',
+        'sort_order' => 1,
+    ]);
+
+    $this->actingAs($user)
+        ->patch(route('categories.reorder', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]), [
+            'type' => 'page',
+            'items' => [
+                ['id' => $secondCategory->id, 'parent_id' => null, 'sort_order' => 0],
+                ['id' => $firstCategory->id, 'parent_id' => null, 'sort_order' => 1],
+            ],
+        ])
+        ->assertRedirect(route('categories.index', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]));
+
+    $this->assertDatabaseHas('categories', [
+        'id' => $secondCategory->id,
+        'parent_id' => null,
+        'sort_order' => 0,
+    ]);
+    $this->assertDatabaseHas('categories', [
+        'id' => $firstCategory->id,
+        'parent_id' => null,
+        'sort_order' => 1,
+    ]);
+});
+
+test('authenticated users can reorder categories and change parent', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+
+    $parentCategory = Category::factory()->create([
+        'org_id' => $org->id,
+        'type' => 'news',
+        'sort_order' => 0,
+    ]);
+    $firstChild = Category::factory()->create([
+        'org_id' => $org->id,
+        'parent_id' => $parentCategory->id,
+        'type' => 'news',
+        'sort_order' => 0,
+    ]);
+    $movedCategory = Category::factory()->create([
+        'org_id' => $org->id,
+        'type' => 'news',
+        'sort_order' => 1,
+    ]);
+
+    $this->actingAs($user)
+        ->patch(route('categories.reorder', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]), [
+            'type' => 'news',
+            'items' => [
+                ['id' => $parentCategory->id, 'parent_id' => null, 'sort_order' => 0],
+                ['id' => $movedCategory->id, 'parent_id' => $parentCategory->id, 'sort_order' => 0],
+                ['id' => $firstChild->id, 'parent_id' => $parentCategory->id, 'sort_order' => 1],
+            ],
+        ])
+        ->assertRedirect(route('categories.byType', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+            'type' => 'news',
+        ]));
+
+    $this->assertDatabaseHas('categories', [
+        'id' => $movedCategory->id,
+        'parent_id' => $parentCategory->id,
+        'sort_order' => 0,
+    ]);
+    $this->assertDatabaseHas('categories', [
+        'id' => $firstChild->id,
+        'parent_id' => $parentCategory->id,
+        'sort_order' => 1,
+    ]);
+});
+
+test('category reorder rejects descendant parent', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+
+    $category = Category::factory()->create([
+        'org_id' => $org->id,
+        'type' => 'page',
+    ]);
+    $childCategory = Category::factory()->create([
+        'org_id' => $org->id,
+        'parent_id' => $category->id,
+        'type' => 'page',
+    ]);
+
+    $this->actingAs($user)
+        ->from(route('categories.index', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]))
+        ->patch(route('categories.reorder', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]), [
+            'type' => 'page',
+            'items' => [
+                ['id' => $category->id, 'parent_id' => $childCategory->id, 'sort_order' => 0],
+                ['id' => $childCategory->id, 'parent_id' => $category->id, 'sort_order' => 0],
+            ],
+        ])
+        ->assertRedirect(route('categories.index', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]))
+        ->assertSessionHasErrors('items.0.parent_id');
+});
+
+test('category reorder rejects categories from another org', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $otherOrg = $team->orgs()->create([
+        'name' => 'Other Org',
+        'slug' => 'other-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+
+    $category = Category::factory()->create([
+        'org_id' => $org->id,
+        'type' => 'page',
+    ]);
+    $otherOrgCategory = Category::factory()->create([
+        'org_id' => $otherOrg->id,
+        'type' => 'page',
+    ]);
+
+    $this->actingAs($user)
+        ->from(route('categories.index', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]))
+        ->patch(route('categories.reorder', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]), [
+            'type' => 'page',
+            'items' => [
+                ['id' => $category->id, 'parent_id' => null, 'sort_order' => 0],
+                ['id' => $otherOrgCategory->id, 'parent_id' => null, 'sort_order' => 1],
+            ],
+        ])
+        ->assertRedirect(route('categories.index', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]))
+        ->assertSessionHasErrors('items.1.id');
+});
+
+test('category reorder rejects parent from another type', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $org = $team->orgs()->create([
+        'name' => 'Test Org',
+        'slug' => 'test-org',
+        'status' => 'enabled',
+    ]);
+    $user->update(['current_org_id' => $org->id]);
+
+    $category = Category::factory()->create([
+        'org_id' => $org->id,
+        'type' => 'page',
+    ]);
+    $newsCategory = Category::factory()->create([
+        'org_id' => $org->id,
+        'type' => 'news',
+    ]);
+
+    $this->actingAs($user)
+        ->from(route('categories.index', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]))
+        ->patch(route('categories.reorder', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]), [
+            'type' => 'page',
+            'items' => [
+                ['id' => $category->id, 'parent_id' => $newsCategory->id, 'sort_order' => 0],
+            ],
+        ])
+        ->assertRedirect(route('categories.index', [
+            'current_team' => $team->slug,
+            'current_org' => $org->slug,
+        ]))
+        ->assertSessionHasErrors('items.0.parent_id');
 });
 
 test('authenticated users can delete category', function () {

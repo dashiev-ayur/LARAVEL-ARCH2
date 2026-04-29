@@ -1,17 +1,24 @@
 /* Составной Table: публичный API через Object.assign; подкомпоненты — приватные. */
-import type { HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from "react";
+import type {
+  HTMLAttributes,
+  Ref,
+  TdHTMLAttributes,
+  ThHTMLAttributes,
+} from "react";
 
 import type { TableCellVariant } from "./table-column-variant";
 
 const headVariantClass: Record<TableCellVariant, string> = {
   default: "px-4 py-3 text-xs font-medium text-slate-400",
   select: "w-12 px-4 py-3 text-center text-xs font-medium text-slate-400",
+  drag: "w-10 px-2 py-3 text-center text-xs font-medium text-slate-400",
   actions: "w-28 px-4 py-3 text-right text-xs font-medium text-slate-400",
 };
 
 const cellVariantClass: Record<TableCellVariant, string> = {
   default: "px-4 py-3 align-middle text-sm",
   select: "w-12 px-4 py-3 text-center align-middle text-sm",
+  drag: "w-10 px-2 py-3 text-center align-middle text-sm",
   actions: "px-4 py-3 text-right align-middle text-sm",
 };
 
@@ -76,6 +83,7 @@ function Footer({
 }
 
 type RowProps = HTMLAttributes<HTMLTableRowElement> & {
+  ref?: Ref<HTMLTableRowElement>;
   /** Строка в thead */
   header?: boolean;
   /** Выбранная строка (например, row selection) */
@@ -85,6 +93,7 @@ type RowProps = HTMLAttributes<HTMLTableRowElement> & {
 function Row({
   className = "",
   header = false,
+  ref,
   selected = false,
   ...rest
 }: RowProps) {
@@ -94,7 +103,7 @@ function Row({
         selected ? "border-l-4 border-l-blue-600 bg-blue-50/30" : ""
       }`;
 
-  return <tr className={`${base} ${className}`.trim()} {...rest} />;
+  return <tr ref={ref} className={`${base} ${className}`.trim()} {...rest} />;
 }
 
 type HeadProps = ThHTMLAttributes<HTMLTableCellElement> & {

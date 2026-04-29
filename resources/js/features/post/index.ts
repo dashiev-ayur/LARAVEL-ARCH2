@@ -1,4 +1,5 @@
 export type {
+    PostCategoryRelationRow,
     PostEditPageProps,
     PostTypeUiItem,
     PostsListQuery,

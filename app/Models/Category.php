@@ -17,11 +17,24 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'acl_resource',
     'slug',
     'title',
+    'sort_order',
 ])]
 class Category extends Model
 {
     /** @use HasFactory<CategoryFactory> */
     use HasFactory;
+
+    /**
+     * Атрибуты с приведением типов.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'sort_order' => 'integer',
+        ];
+    }
 
     /**
      * Организация, которой принадлежит категория.

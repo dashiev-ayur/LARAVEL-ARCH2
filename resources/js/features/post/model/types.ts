@@ -40,6 +40,14 @@ export type PostsListQuery = {
     sort_direction: string;
 };
 
+export type PostCategoryRelationRow = {
+    id: number;
+    parent_id: number | null;
+    depth: number;
+    title: string;
+    is_linked: boolean;
+};
+
 /**
  * Пропы Inertia для страницы списка записей (согласованы с `PostController@index`).
  */
@@ -64,6 +72,7 @@ export type PostEditPageProps = {
     currentTeam: { slug: string } | null;
     currentOrg: { slug: string } | null;
     activeType: string;
+    categories: PostCategoryRelationRow[];
     postTypeUi: Record<string, PostTypeUiItem>;
     postTypes: readonly string[];
     post: PostListRow | null;

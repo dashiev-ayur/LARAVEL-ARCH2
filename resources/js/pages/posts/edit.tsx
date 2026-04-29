@@ -1,8 +1,12 @@
 import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import { Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PostFormFields } from '@/features/post';
-import type { PostEditPageProps, PostsListQuery } from '@/features/post';
+import type {
+    PostCategoryRelationRow,
+    PostEditPageProps,
+    PostsListQuery,
+} from '@/features/post';
 import { dashboard } from '@/routes';
 import {
     byType,
@@ -13,7 +17,11 @@ import {
     store as storePost,
     update as updatePost,
 } from '@/routes/posts';
+import { update as updatePostCategories } from '@/routes/posts/categories';
+import { useDebounce } from '@/shared/lib/hooks/use-debounce';
 import { Button } from '@/shared/ui/button';
+import { Checkbox } from '@/shared/ui/checkbox';
+import { Table } from '@/shared/ui/table';
 
 type PostsListRouteQuery = {
     page: number;
@@ -33,6 +41,7 @@ export default function PostEdit() {
         currentTeam,
         currentOrg,
         activeType,
+        categories,
         post,
         postsListQuery,
         postTypeUi,
@@ -125,73 +134,252 @@ export default function PostEdit() {
                     </div>
                 </div>
 
-                <div className="rounded-xl border border-sidebar-border/70 p-6 dark:border-sidebar-border">
-                    <Form {...formProps} className="space-y-6">
-                        {({ errors, processing }) => (
-                            <>
-                                <PostFormFields
-                                    activeType={activeType}
-                                    post={post ?? undefined}
-                                    errors={errors}
-                                />
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
+                    <div className="rounded-xl border border-sidebar-border/70 p-6 xl:flex-1 dark:border-sidebar-border">
+                        <Form {...formProps} className="space-y-6">
+                            {({ errors, processing }) => (
+                                <>
+                                    <PostFormFields
+                                        activeType={activeType}
+                                        post={post ?? undefined}
+                                        errors={errors}
+                                    />
 
-                                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-                                    {isEditing ? (
-                                        <Button
-                                            type="button"
-                                            variant="destructive"
-                                            disabled={
-                                                isDisabled ||
-                                                !canDelete ||
-                                                processing ||
-                                                deleting
-                                            }
-                                            title={
-                                                canDelete
-                                                    ? 'Удалить черновик'
-                                                    : 'Удалять можно только черновики'
-                                            }
-                                            onClick={handleDelete}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                            {deleting
-                                                ? 'Удаление...'
-                                                : 'Удалить'}
-                                        </Button>
-                                    ) : (
-                                        <span />
-                                    )}
+                                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+                                        {isEditing ? (
+                                            <Button
+                                                type="button"
+                                                variant="destructive"
+                                                disabled={
+                                                    isDisabled ||
+                                                    !canDelete ||
+                                                    processing ||
+                                                    deleting
+                                                }
+                                                title={
+                                                    canDelete
+                                                        ? 'Удалить черновик'
+                                                        : 'Удалять можно только черновики'
+                                                }
+                                                onClick={handleDelete}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                                {deleting
+                                                    ? 'Удаление...'
+                                                    : 'Удалить'}
+                                            </Button>
+                                        ) : (
+                                            <span />
+                                        )}
 
-                                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                                        <Button
-                                            type="button"
-                                            variant="secondary"
-                                            asChild
-                                        >
-                                            <Link href={listHref}>Отмена</Link>
-                                        </Button>
+                                        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                                            <Button
+                                                type="button"
+                                                variant="secondary"
+                                                asChild
+                                            >
+                                                <Link href={listHref}>
+                                                    Отмена
+                                                </Link>
+                                            </Button>
 
-                                        <Button
-                                            type="submit"
-                                            data-test="post-submit"
-                                            disabled={processing || deleting}
-                                        >
-                                            {processing
-                                                ? isEditing
-                                                    ? 'Сохранение...'
-                                                    : 'Создание...'
-                                                : isEditing
-                                                  ? 'Сохранить'
-                                                  : 'Создать'}
-                                        </Button>
+                                            <Button
+                                                type="submit"
+                                                data-test="post-submit"
+                                                disabled={
+                                                    processing || deleting
+                                                }
+                                            >
+                                                {processing
+                                                    ? isEditing
+                                                        ? 'Сохранение...'
+                                                        : 'Создание...'
+                                                    : isEditing
+                                                      ? 'Сохранить'
+                                                      : 'Создать'}
+                                            </Button>
+                                        </div>
                                     </div>
-                                </div>
-                            </>
-                        )}
-                    </Form>
+                                </>
+                            )}
+                        </Form>
+                    </div>
+
+                    <PostCategoriesPanel
+                        categories={categories}
+                        currentTeam={currentTeam}
+                        currentOrg={currentOrg}
+                        post={post}
+                        postsListQuery={postsListQuery}
+                    />
                 </div>
             </div>
         </>
+    );
+}
+
+type PostCategoriesPanelProps = {
+    categories: PostCategoryRelationRow[];
+    currentTeam: { slug: string } | null;
+    currentOrg: { slug: string } | null;
+    post: PostEditPageProps['post'];
+    postsListQuery: PostsListQuery;
+};
+
+function PostCategoriesPanel({
+    categories,
+    currentTeam,
+    currentOrg,
+    post,
+    postsListQuery,
+}: PostCategoriesPanelProps) {
+    const initialCategoryIds = useMemo(
+        () => getLinkedCategoryIds(categories),
+        [categories],
+    );
+    const [selectedCategoryIds, setSelectedCategoryIds] =
+        useState<number[]>(initialCategoryIds);
+    const [saving, setSaving] = useState(false);
+    const lastSavedSignatureRef = useRef(
+        categoryIdsSignature(initialCategoryIds),
+    );
+    const debouncedCategoryIds = useDebounce(selectedCategoryIds, 1000);
+    const canSave = Boolean(currentTeam && currentOrg && post);
+
+    useEffect(() => {
+        const serverCategoryIds = getLinkedCategoryIds(categories);
+        const serverSignature = categoryIdsSignature(serverCategoryIds);
+
+        lastSavedSignatureRef.current = serverSignature;
+        setSelectedCategoryIds(serverCategoryIds);
+    }, [categories]);
+
+    useEffect(() => {
+        if (!canSave || !currentTeam || !currentOrg || !post) {
+            return;
+        }
+
+        const categoryIds = normalizeCategoryIds(debouncedCategoryIds);
+        const categoryIdsRequestSignature = categoryIdsSignature(categoryIds);
+
+        if (categoryIdsRequestSignature === lastSavedSignatureRef.current) {
+            return;
+        }
+
+        router.patch(
+            updatePostCategories.url(
+                {
+                    current_team: currentTeam.slug,
+                    current_org: currentOrg.slug,
+                    post: post.id,
+                },
+                {
+                    query: toPostsListRouteQuery(postsListQuery),
+                },
+            ),
+            {
+                category_ids: categoryIds,
+            },
+            {
+                only: ['categories'],
+                preserveScroll: true,
+                onStart: () => setSaving(true),
+                onSuccess: () => {
+                    lastSavedSignatureRef.current = categoryIdsRequestSignature;
+                },
+                onFinish: () => setSaving(false),
+            },
+        );
+    }, [
+        canSave,
+        currentOrg,
+        currentTeam,
+        debouncedCategoryIds,
+        post,
+        postsListQuery,
+    ]);
+
+    const handleCategoryChange = useCallback(
+        (categoryId: number, checked: boolean) => {
+            setSelectedCategoryIds((currentCategoryIds) => {
+                const withoutCategory = currentCategoryIds.filter(
+                    (currentCategoryId) => currentCategoryId !== categoryId,
+                );
+
+                return checked
+                    ? normalizeCategoryIds([...withoutCategory, categoryId])
+                    : withoutCategory;
+            });
+        },
+        [],
+    );
+
+    return (
+        <aside className="rounded-xl border border-sidebar-border/70 xl:w-[300px] xl:shrink-0 dark:border-sidebar-border">
+            <div className="flex items-start justify-between p-4">
+                <div>
+                    <h2 className="text-lg font-semibold">Категории новости</h2>
+                    <p className="text-sm text-muted-foreground">
+                        Выберите категории для этой записи.
+                    </p>
+                </div>
+            </div>
+
+            {!post ? (
+                <p className="mt-4 rounded-md border border-dashed border-sidebar-border/70 p-3 text-sm text-muted-foreground dark:border-sidebar-border">
+                    Сначала сохраните запись, затем выберите категории.
+                </p>
+            ) : categories.length > 0 ? (
+                <div className="overflow-hidden rounded-none border-none">
+                    <Table.ScrollArea className="rounded-none">
+                        <Table className="w-full border-none">
+                            <Table.Body className="border-none">
+                                {categories.map((category) => (
+                                    <Table.Row key={category.id}  className="border-t-1 border-b-0 border-sidebar-border/70">
+                                        <Table.Cell variant="select">
+                                            <Checkbox
+                                                checked={selectedCategoryIds.includes(
+                                                    category.id,
+                                                )}
+                                                disabled={!canSave || saving}
+                                                aria-label={`Связать запись с категорией ${category.title}`}
+                                                onCheckedChange={(checked) =>
+                                                    handleCategoryChange(
+                                                        category.id,
+                                                        checked === true,
+                                                    )
+                                                }
+                                            />
+                                        </Table.Cell>
+                                        <Table.Cell className="pr-2">
+                                            <div
+                                                className="flex items-center gap-2"
+                                                style={{
+                                                    paddingInlineStart: `${category.depth * 1.25}rem`,
+                                                }}
+                                            >
+                                                {category.depth > 0 ? (
+                                                    <span className="text-muted-foreground">
+                                                        --
+                                                    </span>
+                                                ) : null}
+                                                <span className="font-medium break-words">
+                                                    {category.title}
+                                                </span>
+                                            </div>
+                                        </Table.Cell>
+                                    </Table.Row>
+                                ))}
+                            </Table.Body>
+                        </Table>
+                    </Table.ScrollArea>
+                </div>
+            ) : (
+                <p className="mt-4 rounded-md border border-dashed border-sidebar-border/70 p-3 text-sm text-muted-foreground dark:border-sidebar-border">
+                    Для этого типа записей пока нет категорий.
+                </p>
+            )}
+        </aside>
     );
 }
 
@@ -310,4 +498,20 @@ function toCreateRouteQuery(
         type: activeType,
         ...toPostsListRouteQuery(postsListQuery),
     };
+}
+
+function getLinkedCategoryIds(categories: PostCategoryRelationRow[]): number[] {
+    return normalizeCategoryIds(
+        categories
+            .filter((category) => category.is_linked)
+            .map((category) => category.id),
+    );
+}
+
+function normalizeCategoryIds(categoryIds: number[]): number[] {
+    return [...new Set(categoryIds)].sort((left, right) => left - right);
+}
+
+function categoryIdsSignature(categoryIds: number[]): string {
+    return normalizeCategoryIds(categoryIds).join(',');
 }

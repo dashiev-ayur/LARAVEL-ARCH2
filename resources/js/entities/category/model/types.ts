@@ -8,6 +8,7 @@ export interface CategoryListRow {
     type: string;
     slug: string;
     title: string;
+    sort_order: number;
     posts_count: number;
     children_count: number;
     updated_at: string | null;

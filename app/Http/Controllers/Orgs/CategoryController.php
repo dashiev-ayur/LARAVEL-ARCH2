@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Orgs;
 
 use App\Enums\PostType;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Categories\ReorderCategoriesRequest;
 use App\Http\Requests\Categories\StoreCategoryRequest;
 use App\Http\Requests\Categories\UpdateCategoryRequest;
 use App\Models\Category;
@@ -12,6 +13,7 @@ use App\PostTypes\PostTypeHandlerFactory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -38,6 +40,11 @@ class CategoryController extends Controller
             'type' => $type,
             'slug' => $slug !== '' ? $slug : $this->buildUniqueSlug($org, $type, $title),
             'title' => $title,
+            'sort_order' => $this->nextSiblingSortOrder(
+                $org,
+                $type,
+                isset($validated['parent_id']) ? (int) $validated['parent_id'] : null,
+            ),
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Category created.')]);
@@ -61,14 +68,20 @@ class CategoryController extends Controller
         $type = (string) $validated['type'];
         $title = (string) $validated['title'];
         $slug = trim((string) ($validated['slug'] ?? ''));
+        $parentId = array_key_exists('parent_id', $validated)
+            ? (isset($validated['parent_id']) ? (int) $validated['parent_id'] : null)
+            : $category->parent_id;
+        $movedBetweenSiblingGroups = (string) $category->type !== $type
+            || (int) ($category->parent_id ?? 0) !== (int) ($parentId ?? 0);
 
         $category->update([
-            'parent_id' => array_key_exists('parent_id', $validated)
-                ? (isset($validated['parent_id']) ? (int) $validated['parent_id'] : null)
-                : $category->parent_id,
+            'parent_id' => $parentId,
             'type' => $type,
             'slug' => $slug !== '' ? $slug : $this->buildUniqueSlug($org, $type, $title, $category),
             'title' => $title,
+            'sort_order' => $movedBetweenSiblingGroups
+                ? $this->nextSiblingSortOrder($org, $type, $parentId, $category)
+                : $category->sort_order,
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Category updated.')]);
@@ -97,6 +110,49 @@ class CategoryController extends Controller
     }
 
     /**
+     * Изменить порядок и вложенность категорий текущей организации.
+     */
+    public function reorder(
+        ReorderCategoriesRequest $request,
+        string $current_team,
+        string $current_org,
+    ): RedirectResponse {
+        $org = $this->resolveCurrentOrg($request, $current_org);
+        $validated = $request->validated();
+        $type = (string) $validated['type'];
+
+        /** @var Collection<int, array{id: int|string, parent_id?: int|string|null, sort_order: int|string}> $items */
+        $items = collect($validated['items']);
+
+        DB::transaction(function () use ($items, $org, $type): void {
+            $items
+                ->groupBy(fn (array $item): int => isset($item['parent_id']) ? (int) $item['parent_id'] : 0)
+                ->each(function (Collection $siblingItems) use ($org, $type): void {
+                    $siblingItems
+                        ->sortBy([
+                            ['sort_order', 'asc'],
+                            ['id', 'asc'],
+                        ])
+                        ->values()
+                        ->each(function (array $item, int $sortOrder) use ($org, $type): void {
+                            Category::query()
+                                ->where('org_id', $org->id)
+                                ->where('type', $type)
+                                ->whereKey((int) $item['id'])
+                                ->update([
+                                    'parent_id' => isset($item['parent_id']) ? (int) $item['parent_id'] : null,
+                                    'sort_order' => $sortOrder,
+                                ]);
+                        });
+                });
+        });
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Category order updated.')]);
+
+        return $this->redirectToCategoriesIndex($current_team, $org, $type);
+    }
+
+    /**
      * Показать страницу управления категориями.
      */
     public function index(
@@ -113,10 +169,10 @@ class CategoryController extends Controller
 
         /** @var Collection<int, Category> $categories */
         $categories = $org->categories()
-            ->select(['id', 'parent_id', 'type', 'slug', 'title', 'updated_at'])
+            ->select(['id', 'parent_id', 'type', 'slug', 'title', 'sort_order', 'updated_at'])
             ->withCount(['posts', 'children'])
             ->where('type', $activeType)
-            ->orderBy('title')
+            ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
 
@@ -192,9 +248,25 @@ class CategoryController extends Controller
         return $slug;
     }
 
+    private function nextSiblingSortOrder(
+        Org $org,
+        string $type,
+        ?int $parentId,
+        ?Category $ignoreCategory = null,
+    ): int {
+        $maxSortOrder = Category::query()
+            ->where('org_id', $org->id)
+            ->where('type', $type)
+            ->where('parent_id', $parentId)
+            ->when($ignoreCategory, fn ($query) => $query->whereKeyNot($ignoreCategory->getKey()))
+            ->max('sort_order');
+
+        return is_numeric($maxSortOrder) ? (int) $maxSortOrder + 1 : 0;
+    }
+
     /**
      * @param  Collection<int, Category>  $categories
-     * @return array<int, array{id: int, parent_id: int|null, depth: int, type: string, slug: string, title: string, posts_count: int, children_count: int, updated_at: string|null}>
+     * @return array<int, array{id: int, parent_id: int|null, depth: int, type: string, slug: string, title: string, sort_order: int, posts_count: int, children_count: int, updated_at: string|null}>
      */
     private function toTreeRows(Collection $categories): array
     {
@@ -213,7 +285,7 @@ class CategoryController extends Controller
     /**
      * @param  Collection<int, Collection<int, Category>>  $categoriesByParent
      * @param  array<int, true>  $visited
-     * @return array<int, array{id: int, parent_id: int|null, depth: int, type: string, slug: string, title: string, posts_count: int, children_count: int, updated_at: string|null}>
+     * @return array<int, array{id: int, parent_id: int|null, depth: int, type: string, slug: string, title: string, sort_order: int, posts_count: int, children_count: int, updated_at: string|null}>
      */
     private function flattenTree(
         Collection $categoriesByParent,
@@ -236,6 +308,7 @@ class CategoryController extends Controller
                 'type' => $category->type,
                 'slug' => $category->slug,
                 'title' => $category->title,
+                'sort_order' => (int) $category->sort_order,
                 'posts_count' => (int) $category->posts_count,
                 'children_count' => (int) $category->children_count,
                 'updated_at' => $category->updated_at?->toISOString(),
