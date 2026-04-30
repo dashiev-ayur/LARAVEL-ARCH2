@@ -1,17 +1,24 @@
 # Управление структурой сайта
 
-Структура сайта - таблица pages древовидная, в дальнейшем будет использоваться для автоматической генерации статического сайта.
+Структура сайта — раздел управления древовидной таблицей `pages`. Эти данные используются как административная модель URL-структуры организации и в дальнейшем будут основой для автоматической генерации статического сайта.
 
-## Задача
+## Назначение
 
-Существующий раздел «Страницы» пока пустой. 
-Нужно превратить его в полноценное управление структурой сайта текущей организации: древовидная таблица страниц, создание и редактирование узлов, удаление, изменение порядка и вложенности через drag and drop.
+Раздел «Структура сайта» управляет страницами текущей организации:
 
-Главное замечание по неймингу: название «Страницы» конфликтует с технической папкой Inertia `resources/js/pages`, из-за чего появляется повтор `resources/js/pages/pages/index.tsx`. Для продукта и кода лучше разделить пользовательское название раздела и техническое имя Inertia-страницы.
+- показывает страницы в древовидной таблице;
+- создаёт корневые и дочерние страницы;
+- редактирует название, `slug`, статус и базовые SEO-поля;
+- удаляет только страницы без потомков;
+- меняет порядок и вложенность через drag and drop;
+- сохраняет `parent_id`, `sort_order`, `depth`, `path`;
+- помечает изменённые страницы как `needs_generation = true`.
+
+Название «Страницы» не используется для Inertia-экрана, потому что оно конфликтует с технической папкой `resources/js/pages` и приводит к повтору `resources/js/pages/pages/index.tsx`.
 
 ## Принятый нейминг
 
-Используем название `structure` для frontend-экрана и «Структура сайта» для интерфейса. Это короткий и понятный вариант для текущей задачи, потому что экран управляет не просто списком страниц, а деревом сайта: порядком, вложенностью и URL-структурой.
+Используется название `structure` для frontend-экрана и «Структура сайта» для интерфейса. Экран управляет не просто списком страниц, а деревом сайта: порядком, вложенностью и URL-структурой.
 
 - Пункт меню: «Структура сайта».
 - Inertia component: `structure/index`.
@@ -25,28 +32,31 @@
 
 Отклонённые варианты: `sitemap` может путаться с публичным `sitemap.xml`, `site-sections` хуже подходит для обычных страниц, `content-pages` длиннее и снова возвращает слово pages в frontend path, `site-navigation` сужает смысл до меню.
 
-## Текущая база
+## Реализованное состояние
 
 - Маршрут подключён в `routes/web.php` через `PageController`: `GET {current_org}/structure` отдаёт Inertia component `structure/index`.
 - UI-экран находится в `resources/js/pages/structure/index.tsx`.
-- Таблица `pages` уже создана миграцией `database/migrations/2026_04_29_133500_pages.php`.
-- В таблице уже есть поля для дерева и сайта: `org_id`, `parent_id`, `slug`, `path`, `depth`, `sort_order`, `status`, `title`, `content`, SEO-поля, `needs_generation`.
-- Управление категориями уже реализует похожую механику через `CategoryController`, `ReorderCategoriesRequest`, `resources/js/features/category/ui/categories-tree-table.tsx` и общий слой `resources/js/shared/lib/tree-dnd`.
+- Sidebar отображает пункт «Структура сайта» и ведёт на route `pages.index`.
+- Таблица `pages` создана миграцией `database/migrations/2026_04_29_133500_pages.php`.
+- Модель `Page` использует `SoftDeletes`, enum `PageStatus`, связи с организацией, автором, проверяющим, родителем и дочерними страницами.
+- Backend использует `PageController`, `StorePageRequest`, `UpdatePageRequest`, `ReorderPagesRequest` и `PageTreeService`.
+- Frontend использует `StructureIndex`, `StructureTreeTable`, `PageDialog`, `PageFormFields`, entity-типы `PageListRow` / `PageStatus` и общий слой `shared/lib/tree-dnd`.
+- Wayfinder routes сгенерированы для `pages.index`, `pages.store`, `pages.reorder`, `pages.update`, `pages.destroy`.
 
-## Целевое поведение
+## Пользовательское поведение
 
 - В sidebar раздел отображается как «Структура сайта».
 - URL раздела: `/{current_team}/{current_org}/structure`.
-- Inertia component лучше поменять с `pages/index` на `structure/index`.
+- Inertia component: `structure/index`.
 - Экран показывает древовидную таблицу страниц текущей организации.
 - Пользователь может создать корневую страницу или дочернюю страницу.
 - Пользователь может редактировать название, slug, статус и базовые SEO-поля.
-- Пользователь может удалить страницу без потомков.
+- Пользователь может удалить только страницу без потомков.
 - Пользователь может менять порядок и вложенность через drag and drop.
 - После drag and drop backend сохраняет `parent_id`, `sort_order`, `depth`, `path`.
 - При изменениях, влияющих на итоговый HTML, страница помечается `needs_generation = true`.
 
-## Рекомендуемая структура файлов
+## Структура файлов
 
 Backend:
 
@@ -70,64 +80,72 @@ Frontend:
 
 Важно: `resources/js/pages/structure/index.tsx` убирает повтор `pages/pages`, а `entities/page` сохраняет корректное имя доменной сущности.
 
-## Backend план
+## Backend
 
-1. Создать модель `Page`.
-  - Добавить `SoftDeletes`.
-  - Описать связи `org()`, `author()`, `reviewer()`, `parent()`, `children()`.
-  - Добавить casts для дат, `noindex`, `needs_generation`.
-  - Добавить fillable для полей страницы.
-2. Создать enum `PageStatus`.
-  - Минимальные значения: `draft`, `review`, `published`.
-  - Использовать enum в валидации и при создании страницы по умолчанию.
-3. Заменить placeholder route на `PageController`.
-  - `GET {current_org}/structure` → `pages.index`.
-  - `POST {current_org}/structure` → `pages.store`.
-  - `PATCH {current_org}/structure/reorder` → `pages.reorder`.
-  - `PATCH {current_org}/structure/{page}` → `pages.update`.
-  - `DELETE {current_org}/structure/{page}` → `pages.destroy`.
-   - Inertia component в `index()` должен быть `structure/index`.
-4. Реализовать `PageController`.
-  - `index()` загружает страницы текущей организации и отдаёт плоские tree rows.
-  - `store()` создаёт страницу, считает `slug`, `path`, `depth`, `sort_order`.
-  - `update()` обновляет страницу и пересчитывает `path`/`depth` для потомков при смене `slug` или `parent_id`.
-  - `reorder()` принимает полный payload дерева и сохраняет порядок в транзакции.
-  - `destroy()` удаляет только leaf-страницы. Если есть потомки, возвращает ошибку валидации.
-5. Вынести дерево в `PageTreeService`.
-  - `flattenTreeRows()`.
-  - `buildUniqueSlug()`.
-  - `buildPath()`.
-  - `nextSiblingSortOrder()`.
-  - `rebuildSubtreePaths()`.
-  - `applyReorderPayload()`.
-6. Добавить Form Request классы.
-  - `StorePageRequest`: проверяет `title`, optional `slug`, nullable `parent_id`, `status`, SEO-поля.
-  - `UpdatePageRequest`: дополнительно запрещает выбрать себя или потомка родителем.
-  - `ReorderPagesRequest`: проверяет полный набор страниц текущей организации, отсутствие дублей, чужих id и циклов.
+### Routes
 
-## Frontend план
+- `GET {current_org}/structure` → `PageController@index`, name `pages.index`.
+- `POST {current_org}/structure` → `PageController@store`, name `pages.store`.
+- `PATCH {current_org}/structure/reorder` → `PageController@reorder`, name `pages.reorder`.
+- `PATCH {current_org}/structure/{page}` → `PageController@update`, name `pages.update`.
+- `DELETE {current_org}/structure/{page}` → `PageController@destroy`, name `pages.destroy`.
 
-1. Перенести Inertia-экран.
-  - Было: `resources/js/pages/pages/index.tsx`.
-   - Стало: `resources/js/pages/structure/index.tsx`.
-  - Компонент: `StructureIndex`.
-  - Breadcrumb title: «Структура сайта».
-2. Создать тип `PageListRow`.
-  - Поля: `id`, `parent_id`, `depth`, `slug`, `path`, `title`, `status`, `sort_order`, `children_count`, `updated_at`.
-3. Создать `StructureTreeTable`.
-  - Переиспользовать подход из `CategoriesTreeTable`.
-  - Использовать `@dnd-kit/core`.
-  - Использовать `projectTreeMove()` и `buildTreeReorderPayload()` из `shared/lib/tree-dnd`.
-  - Делать optimistic update и rollback при ошибке.
-4. Создать диалог создания и редактирования страницы.
-  - Для submit использовать Inertia Form или `router` по существующим паттернам проекта.
-  - URL брать через Wayfinder из `@/routes/pages`.
-  - Поля первого этапа: `title`, `slug`, `parent_id`, `status`, `seo_title`, `meta_description`, `noindex`.
-5. Добавить empty state.
-  - Если страниц нет, показывать текст «Структура сайта пока пуста» и кнопку «Создать первую страницу».
-6. Обновить sidebar.
-  - Переименовать пункт с «Страницы» на «Структура сайта».
-  - Ссылку можно оставить на route `pages.index`.
+### `PageController`
+
+- `index()` загружает страницы текущей организации, считает `children_count` и отдаёт `structure/index` с props `pages` и `pageStatuses`.
+- `store()` создаёт страницу, вычисляет `slug`, `path`, `depth`, `sort_order`, автора и `needs_generation`.
+- `update()` обновляет страницу и пересчитывает `path` / `depth` для ветки при смене `slug` или родителя.
+- `reorder()` принимает полный payload дерева и сохраняет порядок в транзакции.
+- `destroy()` удаляет только leaf-страницы. Если есть потомки, возвращает validation error.
+
+### `PageTreeService`
+
+- `flattenTreeRows()` строит плоский список строк для Inertia.
+- `buildUniqueSlug()` подбирает свободный slug по итоговому `path`.
+- `buildPath()` собирает путь из родительского `path` и текущего `slug`.
+- `nextSiblingSortOrder()` считает следующую позицию внутри sibling-группы.
+- `rebuildSubtreePaths()` пересчитывает `path` / `depth` для ветки.
+- `applyReorderPayload()` применяет полный reorder payload, нормализует `sort_order` и пересчитывает структуру.
+
+### Form Requests
+
+- `StorePageRequest` проверяет `title`, optional `slug`, nullable `parent_id`, `status`, SEO-поля и `noindex`.
+- `UpdatePageRequest` дополнительно запрещает выбрать себя или потомка родителем.
+- `ReorderPagesRequest` проверяет полный набор страниц текущей организации, отсутствие дублей, чужих id, self-parent, циклов и дублирующихся итоговых `path`.
+
+## Frontend
+
+### `StructureIndex`
+
+- Находится в `resources/js/pages/structure/index.tsx`.
+- Отображает заголовок, краткое описание, toolbar и таблицу структуры.
+- Breadcrumb title: «Структура сайта».
+- Получает props `pages: PageListRow[]` и `pageStatuses: PageStatus[]`.
+
+### `StructureTreeTable`
+
+- Находится в `resources/js/features/structure/ui/structure-tree-table.tsx`.
+- Использует `@dnd-kit/core`.
+- Использует `projectTreeMove()` и `buildTreeReorderPayload()` из `shared/lib/tree-dnd`.
+- Делает optimistic update при drag and drop и rollback при ошибке.
+- Отправляет reorder через `router.patch(pages.reorder.url(...), { items })`.
+
+### `PageDialog` и `PageFormFields`
+
+- Диалог создания/редактирования находится в `resources/js/features/structure/ui/page-dialog.tsx`.
+- Поля формы вынесены в `resources/js/features/structure/ui/page-form-fields.tsx`.
+- Submit использует Inertia `<Form>` и Wayfinder `.form()` из `@/routes/pages`.
+- Удаление использует `router.delete()` и route `pages.destroy`.
+- Поля первого этапа: `title`, `slug`, `parent_id`, `status`, `seo_title`, `meta_description`, `noindex`.
+
+### Entity-типы
+
+`PageListRow` находится в `resources/js/entities/page/model/types.ts` и содержит:
+
+- `id`, `parent_id`, `depth`;
+- `slug`, `path`, `title`, `status`;
+- `seo_title`, `meta_description`, `noindex`;
+- `sort_order`, `children_count`, `updated_at`.
 
 ## Инварианты дерева
 
@@ -144,34 +162,36 @@ Frontend:
 
 ```mermaid
 flowchart TD
-    sidebar[Sidebar: Структура сайта] --> structureIndex[structure/index]
-    structureIndex --> treeTable[StructureTreeTable]
-    treeTable --> treeDnd[shared tree-dnd]
-    treeTable --> reorderRoute[pages.reorder]
-    pageDialog[PageDialog] --> crudRoutes[pages.store / pages.update / pages.destroy]
-    reorderRoute --> pageController[PageController]
+    sidebar["Sidebar: Структура сайта"] --> structureIndex["structure/index"]
+    structureIndex --> treeTable["StructureTreeTable"]
+    treeTable --> treeDnd["shared tree-dnd"]
+    treeTable --> reorderRoute["pages.reorder"]
+    pageDialog["PageDialog"] --> crudRoutes["pages.store / pages.update / pages.destroy"]
+    reorderRoute --> pageController["PageController"]
     crudRoutes --> pageController
-    pageController --> pageTreeService[PageTreeService]
-    pageTreeService --> pagesTable[pages table]
+    pageController --> pageTreeService["PageTreeService"]
+    pageTreeService --> pagesTable["pages table"]
 ```
 
 
 
 ## Тестирование
 
-- Обновить `tests/Feature/PagesPageTest.php`: проверять component `structure/index` и наличие prop `pages`.
-- Добавить тест создания корневой страницы.
-- Добавить тест создания дочерней страницы с корректными `path`, `depth`, `sort_order`.
-- Добавить тест обновления slug родителя и пересчёта path у потомков.
-- Добавить тест reorder: порядок и вложенность сохраняются.
-- Добавить тест reorder validation: неполный payload, дубли, циклы и чужая организация отклоняются.
-- Добавить тест удаления leaf-страницы.
-- Добавить тест запрета удаления страницы с потомками.
+- `tests/Feature/PagesPageTest.php` проверяет component `structure/index`, prop `pages` и список `pageStatuses`.
+- Проверяется создание корневой страницы с генерацией уникального slug.
+- Проверяется создание дочерней страницы с корректными `path`, `depth`, `sort_order`.
+- Проверяется обновление slug родителя и пересчёт `path` у потомков.
+- Проверяется reorder: порядок, вложенность, `path` и `depth` сохраняются.
+- Проверяется reorder validation: неполный payload, дубли, циклы и чужая организация отклоняются.
+- Проверяется удаление leaf-страницы.
+- Проверяется запрет удаления страницы с потомками.
 
-## Проверки после реализации
+## Проверки
 
-- Запустить `php artisan wayfinder:generate --no-interaction`, если generated routes не обновились автоматически.
-- Запустить `vendor/bin/pint --dirty --format agent`.
-- Запустить `php artisan test --compact tests/Feature/PagesPageTest.php`.
+- `php artisan wayfinder:generate --with-form --no-interaction`
+- `vendor/bin/pint --dirty --format agent`
+- `php artisan test --compact tests/Feature/PagesPageTest.php`
+- `npm run types:check`
+- `npx eslint resources/js/features/structure resources/js/pages/structure resources/js/entities/page resources/js/widgets/app-sidebar.tsx`
 - Вручную проверить сценарий: создать несколько страниц, вложить одну в другую drag and drop, обновить страницу браузера и убедиться, что порядок сохранился.
 
