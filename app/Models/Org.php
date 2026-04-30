@@ -71,4 +71,14 @@ class Org extends Model
     {
         return $this->hasMany(Category::class, 'org_id');
     }
+
+    /**
+     * Страницы структуры сайта организации.
+     *
+     * @return HasMany<Page, $this>
+     */
+    public function pages(): HasMany
+    {
+        return $this->hasMany(Page::class, 'org_id');
+    }
 }

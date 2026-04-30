@@ -2,6 +2,7 @@
 
 use App\Enums\PostType;
 use App\Http\Controllers\Orgs\CategoryController;
+use App\Http\Controllers\Orgs\PageController;
 use App\Http\Controllers\Orgs\PostController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
@@ -16,7 +17,11 @@ Route::prefix('{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
     ->group(function () {
         Route::inertia('dashboard', 'dashboard')->name('dashboard');
-        Route::inertia('{current_org}/pages', 'pages/index')->name('pages.index');
+        Route::get('{current_org}/structure', [PageController::class, 'index'])->name('pages.index');
+        Route::post('{current_org}/structure', [PageController::class, 'store'])->name('pages.store');
+        Route::patch('{current_org}/structure/reorder', [PageController::class, 'reorder'])->name('pages.reorder');
+        Route::patch('{current_org}/structure/{page}', [PageController::class, 'update'])->name('pages.update');
+        Route::delete('{current_org}/structure/{page}', [PageController::class, 'destroy'])->name('pages.destroy');
         Route::get('{current_org}/categories', [CategoryController::class, 'index'])->name('categories.index');
         Route::post('{current_org}/categories', [CategoryController::class, 'store'])->name('categories.store');
         Route::patch('{current_org}/categories/reorder', [CategoryController::class, 'reorder'])->name('categories.reorder');

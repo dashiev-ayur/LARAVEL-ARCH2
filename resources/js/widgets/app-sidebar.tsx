@@ -68,7 +68,7 @@ export function AppSidebar() {
             icon: LayoutGrid,
         },
         {
-            title: 'Страницы',
+            title: 'Структура сайта',
             href: pagesUrl,
             icon: Files,
             disabled: !currentOrg,

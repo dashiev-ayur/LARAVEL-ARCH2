@@ -11,3 +11,4 @@ export {
     PostsListToolbar,
     usePostsListPage,
 } from './post';
+export { PageDialog, PageFormFields, StructureTreeTable } from './structure';

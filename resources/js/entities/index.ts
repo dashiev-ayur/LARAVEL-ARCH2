@@ -3,6 +3,7 @@
  * Публичный API: импорты из @/entities/<name> (user, team, org, post).
  */
 export type { Org, OrgEntity } from './org';
+export type { PageListRow, PageStatus } from './page';
 export type { PostListRow } from './post';
 export { PostStatusCell, PostTitleExcerptCell } from './post';
 export type {
